@@ -3,3 +3,16 @@ tw start:
 
 run:
 	python manage.py runserver
+
+mig:
+	python manage.py migrate
+
+makemig:
+	python manage.py makemigrations
+
+addsu:
+	python manage.py createsuperuser --email "admin@admin.com"
+
+
+pc:
+	pre-commit run --all

@@ -45,8 +45,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_browser_reload",
     "theme",
-    "apps.tasks",
     "apps.users",
+    "apps.projects",
+    "apps.tasks",
 ]
 
 

@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Taskuha</title>
+    <title>Jusk</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet" />
   </head>
 
-  <body>
+  <body class="flex flex-col h-screen border-2 border-gray-300 text-gray-700">
     {% include "header.html" %}
-    <main>{% block content %}{% endblock %}</main>
+    <main class="flex flex-row h-full">{% include "sidebar.html" %}{% block content %}{% endblock %}</main>
   </body>
 </html>

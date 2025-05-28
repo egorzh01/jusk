@@ -2,8 +2,27 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@source "../../../**/*.{html,css,js}";
+@source "../../../**/*.{html,css,js,svg}";
 
 :root {
   --default-font-family: "Rubik";
+}
+
+/* Sidebar */
+.sidebar-container {
+  @apply bg-gray-200 border-r-2 border-gray-300 h-full flex flex-col w-55 p-5 gap-10;
+}
+.sidebar-block {
+  @apply flex flex-col gap-5;
+}
+.sidebar-item {
+  @apply border-b-2 transition transform duration-200 ease-in-out hover:translate-x-2 hover:border-gray-500 border-gray-300 flex gap-1;
+}
+.sidebar-item.active {
+  @apply translate-x-2 border-gray-500;
+}
+
+/* Header */
+.header-container {
+  @apply bg-gray-200 border-b-2 border-gray-300 h-12 flex items-center justify-between;
 }

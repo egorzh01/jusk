@@ -6,14 +6,14 @@ from django.forms import ModelForm
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from .models import Task
+from .models import Project
 
 
-@admin.register(Task)
-class TaskAdmin(admin.ModelAdmin[Task]):
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin[Project]):
     ordering = ["created_at", "updated_at"]
-    filter = ("executor", "creator", "status")
-    list_display = ["project", "title", "status", "executor"]
+    filter = ("executor",)
+    list_display = ["title", "created_at", "updated_at"]
     search_fields = ["title", "created_at", "updated_at"]
     readonly_fields = ["created_at", "updated_at", "creator"]
     list_filter = ["created_at", "updated_at"]
@@ -24,23 +24,10 @@ class TaskAdmin(admin.ModelAdmin[Task]):
             {
                 "fields": (
                     "title",
-                    "status",
                     "created_at",
                     "updated_at",
                     "description",
-                    "executor",
                     "creator",
-                ),
-            },
-        ),
-        (
-            _("Relations"),
-            {
-                "fields": (
-                    "project",
-                    "next",
-                    "previous",
-                    "parent",
                 ),
             },
         ),
@@ -53,12 +40,8 @@ class TaskAdmin(admin.ModelAdmin[Task]):
                 "classes": ("wide",),
                 "fields": (
                     "title",
-                    "status",
                     "description",
                     "executor",
-                    "parent",
-                    "next",
-                    "previous",
                 ),
             },
         ),
@@ -67,8 +50,8 @@ class TaskAdmin(admin.ModelAdmin[Task]):
     def save_model(
         self,
         request: HttpRequest,
-        obj: Task,
-        form: ModelForm[Task],
+        obj: Project,
+        form: ModelForm[Project],
         change: bool,
     ) -> None:
         if not change:
