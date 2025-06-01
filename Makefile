@@ -16,3 +16,9 @@ addsu:
 
 pc:
 	pre-commit run --all
+
+lid:
+	python manage.py loaddata init_data.json
+
+init:
+	python manage.py makemigrations && python manage.py migrate && python manage.py loaddata init_data.json

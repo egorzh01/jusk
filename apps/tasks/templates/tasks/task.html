@@ -1,0 +1,94 @@
+{% extends "base.html" %} {% block content %}
+<div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
+  <div class="flex flex-row gap-2">
+    <h1 class="text-2xl font-semibold">Task #{{ task.id }}</h1>
+    <a href="{% url 'tasks:edit_task' task.id %}" class="">{% include "icons/pencil-square.html" %}</a>
+  </div>
+  <span class="text-sm">Created at: {{ task.created_at|date:"Y-m-d H:i" }}</span>
+  <span class="mb-6 text-sm">Last updated: {{ task.updated_at|date:"Y-m-d H:i" }}</span>
+  <div class="space-y-5 text-sm">
+    <div class="flex flex-row gap-10">
+      <div>
+        <label class="block mb-2 font-medium">Project</label>
+        <p class="p-2 border border-gray-300 rounded">{{ task.project.title }}</p>
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium">Status</label>
+        <p class="p-2 border border-gray-300 rounded">{{ task.get_status_display }}</p>
+      </div>
+
+      <div>
+        <label class="block mb-2 font-medium">Executor</label>
+        <p class="p-2 border border-gray-300 rounded">{{ task.executor }}</p>
+      </div>
+    </div>
+
+    <div>
+      <label class="block mb-1 font-medium">Title</label>
+      <p class="p-2 border border-gray-300 rounded">{{ task.title }}</p>
+    </div>
+
+    <div>
+      <label class="block mb-1 font-medium">Description</label>
+      <p class="p-2 border border-gray-300 rounded whitespace-pre-wrap">{{ task.description }}</p>
+    </div>
+    <div x-data="{ tab: 'comments' }" class="w-full">
+      <!-- Вкладки -->
+      <div class="flex border-b border-gray-300">
+        <button
+          @click="tab = 'comments'"
+          :class="tab === 'comments' 
+            ? 'border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px' 
+            : 'text-gray-500 hover:text-gray-700'"
+          class="px-4 py-2 font-medium"
+        >
+          Comments
+        </button>
+        <button
+          @click="tab = 'history'"
+          :class="tab === 'history' 
+            ? 'border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px' 
+            : 'text-gray-500 hover:text-gray-700'"
+          class="px-4 py-2 font-medium"
+        >
+          History
+        </button>
+        <button
+          @click="tab = 'worklogs'"
+          :class="tab === 'worklogs' 
+            ? 'border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px' 
+            : 'text-gray-500 hover:text-gray-700'"
+          class="px-4 py-2 font-medium"
+        >
+          Work logs
+        </button>
+      </div>
+
+      <!-- Содержимое карточки -->
+      <div class="rounded-b p-4 bg-white">
+        <!-- Comments -->
+        <div x-show="tab === 'comments'" class="flex flex-col gap-3">
+          {% if task.comments.exists %} {% for comment in task.comments.all %} {% include "tasks/comment.html" with comment=comment %} {% endfor %} {% else %}
+          <div class="text-gray-500 italic">No comments</div>
+          {% endif %}
+        </div>
+
+        <!-- History -->
+        <div x-show="tab === 'history'" x-cloak class="flex flex-col gap-3">
+          {% if task.history.exists %} {% for history_entry in task.history.all %} {% include "tasks/history_entry.html" with history_entry=history_entry %} {% endfor %} {% else %}
+          <div class="text-gray-500 italic">No history</div>
+          {% endif %}
+        </div>
+
+        <!-- Work logs -->
+        <div x-show="tab === 'worklogs'" x-cloak class="flex flex-col gap-3">
+          {% if task.log_times.exists %} {% for log_time in task.log_times.all %} {% include "tasks/log_time.html" with log_time=log_time %} {% endfor %} {% else %}
+          <div class="text-gray-500 italic">No work logs</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

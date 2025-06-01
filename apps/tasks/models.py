@@ -1,5 +1,7 @@
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django_stubs_ext.db.models import TypedModelMeta
 
 
 class TaskStatus(models.TextChoices):
@@ -69,7 +71,104 @@ class Task(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    class Meta:
+    class Meta(TypedModelMeta):
         db_table = "tasks"
         verbose_name = "task"
         verbose_name_plural = "tasks"
+        ordering = ["-updated_at"]
+
+
+class TaskComment(models.Model):
+    task = models.ForeignKey(
+        "tasks.Task",
+        on_delete=models.CASCADE,
+        related_name="comments",
+        editable=False,
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        editable=False,
+    )
+    creator = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        editable=False,
+    )
+
+    class Meta(TypedModelMeta):
+        db_table = "task_comments"
+        verbose_name = "task comment"
+        verbose_name_plural = "task comments"
+        ordering = ["-created_at"]
+
+
+class TaskHistoryEntry(models.Model):
+    task = models.ForeignKey(
+        "tasks.Task",
+        on_delete=models.CASCADE,
+        related_name="history",
+        editable=False,
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+    )
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        editable=False,
+    )
+
+    class Meta(TypedModelMeta):
+        db_table = "task_history"
+        verbose_name = "task history entry"
+        verbose_name_plural = "task history entries"
+        ordering = ["-created_at"]
+
+
+class TaskLogTime(models.Model):
+    task = models.ForeignKey(
+        "tasks.Task",
+        on_delete=models.CASCADE,
+        related_name="log_times",
+        editable=False,
+    )
+    creator = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="log_times",
+        editable=False,
+    )
+    hours = models.DecimalField(
+        max_digits=5,  # до 999.99 часов
+        decimal_places=2,
+        help_text="Количество часов, потраченных на задачу",
+        validators=[MinValueValidator(0.0)],
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Описание выполненной работы (необязательно)",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        editable=False,
+    )
+
+    class Meta(TypedModelMeta):
+        db_table = "task_log_times"
+        verbose_name = "work log"
+        verbose_name_plural = "work logs"
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.creator} — {self.task} — {self.hours} ч."

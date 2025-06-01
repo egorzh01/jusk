@@ -1,4 +1,5 @@
 from django.db import models
+from django_stubs_ext.db.models import TypedModelMeta
 
 
 class Project(models.Model):
@@ -26,7 +27,7 @@ class Project(models.Model):
     def __str__(self) -> str:
         return self.title
 
-    class Meta:
+    class Meta(TypedModelMeta):
         db_table = "projects"
         verbose_name = "project"
         verbose_name_plural = "projects"
@@ -36,16 +37,18 @@ class ProjectMember(models.Model):
     project = models.ForeignKey(
         "projects.Project",
         on_delete=models.CASCADE,
+        related_name="members",
     )
     user = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
+        related_name="projects",
     )
 
     def __str__(self) -> str:
         return f"{self.project} - {self.user}"
 
-    class Meta:
+    class Meta(TypedModelMeta):
         db_table = "project_members"
         verbose_name = "project member"
         verbose_name_plural = "project members"

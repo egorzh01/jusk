@@ -1,0 +1,100 @@
+{% extends "base.html" %} {% block content %}
+<div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
+  <h1 class="text-2xl font-semibold mb-6">Edit task #{{ task.id }}</h1>
+
+  <form method="post" class="space-y-5 text-sm">
+    {% csrf_token %}
+    <div class="flex flex-row gap-10">
+      <div>
+        <label for="{{ form.project.id_for_label }}" class="block mb-1 font-medium">{{ form.project.label }}</label>
+        {{ form.project }} {% if form.project.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.project.errors.0 }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label for="{{ form.status.id_for_label }}" class="block mb-1 font-medium">{{ form.status.label }}</label>
+        {{ form.status }} {% if form.status.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.status.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div id="executor-container">
+        <label for="{{ form.executor.id_for_label }}" class="block mb-1 font-medium">{{ form.executor.label }}</label>
+        {{ form.executor }}{% if form.executor.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ form.executor.errors.0 }}</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div>
+      <label for="{{ form.title.id_for_label }}" class="block mb-1 font-medium">{{ form.title.label }}</label>
+      {{ form.title }} {% if form.title.errors %}
+      <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+      {% endif %}
+    </div>
+    <div>
+      <label for="{{ form.description.id_for_label }}" class="block mb-1 font-medium">{{ form.description.label }}</label>
+      {{ form.description }} {% if form.description.errors %}
+      <p class="text-red-500 text-sm mt-1">{{ form.description.errors.0 }}</p>
+      {% endif %}
+    </div>
+    <div>
+      <label for="{{ comment_form.text.id_for_label }}" class="block mb-1 font-medium">Add comment</label>
+      {{ comment_form.text }} {% if comment_form.text.errors %}
+      <p class="text-red-500 text-sm mt-1">{{ comment_form.text.errors.0 }}</p>
+      {% endif %}
+    </div>
+    <div>
+      <h3 class="font-semibold mb-3 border-b border-gray-300">Log time</h3>
+      <div class="flex flex-row gap-3 mb-2">
+        <label for="{{ log_time_form.hours.id_for_label }}" class="font-medium self-center">Hours</label>
+        {{ log_time_form.hours }} {% if log_time_form.hours.errors %}
+        <p class="text-red-500 text-sm">{{ log_time_form.hours.errors.0 }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label for="{{ log_time_form.description.id_for_label }}" class="block mb-1 font-medium">Description</label>
+        {{ log_time_form.description }} {% if log_time_form.description.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ log_time_form.description.errors.0 }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <button type="submit" class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium">Save</button>
+  </form>
+</div>
+<script>
+  const projectSelect = document.getElementById("project");
+  const executorSelect = document.getElementById("executor");
+  const executorContainer = document.getElementById("executor-container");
+
+  const disableExecutorSelect = () => {
+    executorSelect.disabled = true;
+    executorSelect.innerHTML = "";
+    executorSelect.appendChild(new Option("---------", ""));
+    executorContainer.classList.add("text-gray-400");
+    executorContainer.title = "Select project";
+  };
+
+  projectSelect.addEventListener("change", function () {
+    const projectId = this.value;
+
+    if (!projectId) {
+      disableExecutorSelect();
+      return;
+    }
+
+    fetch(`/api/projects/${projectId}/members/`)
+      .then((res) => res.json())
+      .then((data) => {
+        executorSelect.disabled = false;
+        executorSelect.innerHTML = "";
+        executorSelect.appendChild(new Option("---------", ""));
+        data.members.forEach((member) => {
+          executorSelect.appendChild(new Option(`${member.name}`, `${member.id}`));
+        });
+      });
+    executorContainer.classList.remove("text-gray-400");
+    executorContainer.title = "";
+  });
+</script>
+{% endblock content %}

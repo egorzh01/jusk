@@ -1,9 +1,9 @@
 <div class="sidebar-container">
   <div class="sidebar-block">
-    <a class="sidebar-item" href="#">{% include "icons/plus.html" %}<span>Create task</span></a>
+    <a class="sidebar-item{% if request.resolver_match.view_name == 'tasks:new_task' %} active{% endif %}" href="{% url 'tasks:new_task' %}">{% include "icons/plus.html" %}<span>Create task</span></a>
   </div>
   <div class="sidebar-block">
-    <a class="sidebar-item{% if request.resolver_match.view_name == 'tasks:home' %} active{% endif %}" href="{% url 'tasks:home' %}">{% include "icons/house.html" %}<span>Home</span></a>
+    <a class="sidebar-item{% if request.resolver_match.view_name == 'home' %} active{% endif %}" href="{% url 'home' %}">{% include "icons/house.html" %}<span>Home</span></a>
     <a class="sidebar-item{% if request.resolver_match.view_name == 'tasks:tasks' %} active{% endif %}" href="#">{% include "icons/queue-list.html" %}<span>Tasks</span></a>
     <a class="sidebar-item{% if request.resolver_match.view_name == 'tasks:projects' %} active{% endif %}" href="#">{% include "icons/presentation-chart-line.html" %}<span>Projects</span></a>
   </div>

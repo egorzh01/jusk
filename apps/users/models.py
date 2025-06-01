@@ -1,6 +1,8 @@
 # users/models.py
 
 
+from typing import Any
+
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -12,7 +14,10 @@ from django.utils.translation import gettext_lazy
 
 class UserManager(BaseUserManager["User"]):
     def create_user(
-        self, email: str, password: str | None = None, **extra_fields: object
+        self,
+        email: str,
+        password: str,
+        **extra_fields: Any,
     ) -> "User":
         if not email:
             raise ValueError("Email is required")
@@ -23,7 +28,7 @@ class UserManager(BaseUserManager["User"]):
         return user
 
     def create_superuser(
-        self, email: str, password: str | None = None, **extra_fields: object
+        self, email: str, password: str, **extra_fields: object
     ) -> "User":
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -64,4 +69,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []  # ← какие поля будут запрашиваться при создании superuser'а кроме email и password
 
     def __str__(self) -> str:
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
         return self.email

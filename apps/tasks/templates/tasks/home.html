@@ -1,27 +1,29 @@
 {% extends "base.html" %} {% block content %}
 <div class="grid grid-cols-4 grid-rows-2 w-full">
-  <div class="row-span-2 col-span-2 bg-gray-200 p-4">
+  <div class="row-span-2 col-span-2 p-4">
     <h1 class="text-xl text-center mb-3">My tasks</h1>
-    <table class="table-fixed w-full border border-gray-300 text-center text-sm">
-      <thead class="bg-gray-100 font-semibold">
-        <tr onclick="alert('click')">
-          <th class="w-1/6 border border-gray-300">#</th>
-          <th class="w-1/5 border border-gray-300">Status</th>
-          <th class="w-1/2 border border-gray-300">Title</th>
-          <th class="w-1/5 border border-gray-300">Updated</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for task in tasks %}
-        <tr class="hover:bg-gray-50 hover:cursor-pointer h-5">
-          <td class="border border-gray-300 py-2">{{ task.id }}</td>
-          <td class="border border-gray-300 py-2">{{ task.status }}</td>
-          <td class="border border-gray-300 py-2 text-xs">{{ task.title }}</td>
-          <td class="border border-gray-300 py-2 text-xs">{{ task.updated_at | date:"Y-m-d H:i:s" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="overflow-y-auto max-h-180 border border-gray-300 rounded scrollarea">
+      <table class="table-fixed w-full text-center text-sm">
+        <thead class="bg-gray-100 font-semibold top-0 z-10 sticky">
+          <tr>
+            <th class="w-1/6 border-r border-gray-300 bg-gray-100">#</th>
+            <th class="w-1/5 border-r border-gray-300 bg-gray-100">Status</th>
+            <th class="w-1/2 border-r border-gray-300 bg-gray-100">Title</th>
+            <th class="w-1/5 border-gray-300 bg-gray-100">Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in tasks %}
+          <tr class="hover:bg-gray-100 cursor-pointer h-5 text-xs" onclick="window.location.href='{% url 'tasks:task' task.id %}'">
+            <td class="border-r border-t border-gray-300 py-2">{{ task.id }}</td>
+            <td class="border-r border-t border-gray-300 py-2">{{ task.get_status_display }}</td>
+            <td class="border-r border-t border-gray-300 py-2">{{ task.title }}</td>
+            <td class="border-t border-gray-300 py-2">{{ task.updated_at|date:"Y-m-d H:i:s" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
   {% comment %}
   <div class="row-span-2 bg-gray-400 p-4">История</div>
