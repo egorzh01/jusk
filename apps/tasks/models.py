@@ -11,7 +11,20 @@ class TaskStatus(models.TextChoices):
     CANCELED = "CANCELED", _("Canceled")
 
 
-class Task(models.Model):
+class WithCreatedAtAndUpdatedAt(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    def was_updated(self) -> bool:
+        return self.updated_at.replace(microsecond=0) > self.created_at.replace(
+            microsecond=0,
+        )
+
+    class Meta:
+        abstract = True
+
+
+class Task(WithCreatedAtAndUpdatedAt):
     status = models.CharField(
         choices=TaskStatus.choices,
         default=TaskStatus.NEW,
@@ -20,14 +33,6 @@ class Task(models.Model):
         max_length=128,
     )
     description = models.TextField()
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-    )
     executor = models.ForeignKey(
         "users.User",
         null=True,
@@ -78,7 +83,7 @@ class Task(models.Model):
         ordering = ["-updated_at"]
 
 
-class TaskComment(models.Model):
+class TaskComment(WithCreatedAtAndUpdatedAt):
     task = models.ForeignKey(
         "tasks.Task",
         on_delete=models.CASCADE,
@@ -86,14 +91,6 @@ class TaskComment(models.Model):
         editable=False,
     )
     text = models.TextField()
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        editable=False,
-    )
     creator = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
@@ -132,7 +129,7 @@ class TaskHistoryEntry(models.Model):
         ordering = ["-created_at"]
 
 
-class TaskLogTime(models.Model):
+class TaskLogTime(WithCreatedAtAndUpdatedAt):
     task = models.ForeignKey(
         "tasks.Task",
         on_delete=models.CASCADE,
@@ -154,14 +151,6 @@ class TaskLogTime(models.Model):
     description = models.TextField(
         blank=True,
         help_text="Описание выполненной работы (необязательно)",
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        editable=False,
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        editable=False,
     )
 
     class Meta(TypedModelMeta):

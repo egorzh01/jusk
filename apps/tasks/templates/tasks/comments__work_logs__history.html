@@ -1,0 +1,79 @@
+<div x-data="{ tab: 'comments' }" class="w-full text-sm">
+  <!-- Вкладки -->
+  <div class="flex border-b border-gray-300">
+    <button
+      type="button"
+      @click="tab = 'comments'"
+      :class="tab === 'comments'
+          ? 'border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px'
+          : 'text-gray-500 hover:text-gray-700'"
+      class="px-4 py-2 font-medium cursor-pointer"
+    >
+      Comments
+    </button>
+    <button
+      type="button"
+      @click="tab = 'worklogs'"
+      :class="tab === 'worklogs'
+        ? 'border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px'
+        : 'text-gray-500 hover:text-gray-700'"
+      class="px-4 py-2 font-medium cursor-pointer"
+    >
+      Work logs
+    </button>
+    <button
+      type="button"
+      @click="tab = 'history'"
+      :class="tab === 'history'
+          ? 'border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px'
+          : 'text-gray-500 hover:text-gray-700'"
+      class="px-4 py-2 font-medium cursor-pointer"
+    >
+      History
+    </button>
+  </div>
+
+  <!-- Содержимое карточки -->
+  <div class="rounded-b p-4 bg-white">
+    <!-- Comments -->
+    <div x-show="tab === 'comments'" class="flex flex-col gap-3">
+      {% if task.comments.exists %} {% for comment in task.comments.all %}
+      <div class="flex flex-col">
+        <span class="text-sm text-gray-400 border-b border-gray-300 rounded mb-3"
+          >{{comment.creator}}, {{comment.created_at|date:"Y-m-d H:i"}}{% if comment.was_updated %}(updated {{comment.updated_at|date:"Y-m-d H:i"}}){% endif %}</span
+        >
+        <span class="text-sm">{{comment.text}}</span>
+      </div>
+      {% endfor %} {% else %}
+      <div class="text-gray-500 italic">No comments</div>
+      {% endif %}
+    </div>
+
+    <!-- History -->
+    <div x-show="tab === 'history'" x-cloak class="flex flex-col gap-3">
+      {% if task.history.exists %} {% for history_entry in task.history.all %}
+      <div class="flex flex-col">
+        <span class="text-sm text-gray-400 border-b border-gray-300 rounded mb-3">{{history_entry.user}}, {{history_entry.created_at|date:"Y-m-d H:i"}}</span>
+        <span class="text-sm">{{history_entry.text}}</span>
+      </div>
+      {% endfor %} {% else %}
+      <div class="text-gray-500 italic">No history</div>
+      {% endif %}
+    </div>
+
+    <!-- Time logs -->
+    <div x-show="tab === 'worklogs'" x-cloak class="flex flex-col gap-3">
+      {% if task.log_times.exists %} {% for log_time in task.log_times.all %}
+      <div class="flex flex-col">
+        <span class="text-sm text-gray-400 border-b border-gray-300 rounded mb-3"
+          >{{log_time.creator}}, {{log_time.created_at|date:"Y-m-d H:i"}}{% if log_time.was_updated %}(updated {{log_time.updated_at|date:"Y-m-d H:i"}}){% endif %}</span
+        >
+        <span class="text-sm font-semibold">Added {{log_time.hours}} hours</span>
+        <span class="text-sm">{{log_time.description}}</span>
+      </div>
+      {% endfor %} {% else %}
+      <div class="text-gray-500 italic">No work logs</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
