@@ -48,7 +48,8 @@ class CTaskView(LoginRequiredMixin, TemplateView):
             executor_field = cast(forms.ModelChoiceField[User], form.fields["executor"])
             executor_field.queryset = User.objects.none()
             project_field = cast(
-                forms.ModelChoiceField[Project], form.fields["project"],
+                forms.ModelChoiceField[Project],
+                form.fields["project"],
             )
             project_field.queryset = Project.objects.filter(
                 members__user=cast(User, self.request.user),
@@ -88,10 +89,11 @@ class TaskView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         task = get_object_or_404(Task, pk=self.kwargs["task_id"])
         context["task"] = task
-        context["total_hours"] = (
+        total_hours = (
             TaskTimeLog.objects.filter(task=task).aggregate(Sum("hours"))["hours__sum"]
             or 0
         )
+        context["total_hours"] = f"{total_hours:.2f}"
         return context
 
 
@@ -145,6 +147,7 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
             log_description = form.cleaned_data.get("log_description")
             log_hours = form.cleaned_data.get("log_hours")
+            print(log_description, log_hours)
             if log_description and log_hours:
                 TaskTimeLog.objects.create(
                     task=task,

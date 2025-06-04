@@ -126,10 +126,15 @@ class UTaskForm(forms.ModelForm[Task]):
         log_description = cleaned_data.get("log_description")
         log_hours = cleaned_data.get("log_hours")
 
-        if log_description and not log_hours:
+        if log_description and log_hours is None:
             self.add_error(
                 "log_hours",
                 "This field is required when description is filled.",
+            )
+        if log_hours is not None and log_hours <= 0:
+            self.add_error(
+                "log_hours",
+                "This field must be greater than 0.",
             )
         return cleaned_data
 

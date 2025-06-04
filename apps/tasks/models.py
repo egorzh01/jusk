@@ -146,7 +146,7 @@ class TaskTimeLog(WithCreatedAtAndUpdatedAt):
         max_digits=5,  # до 999.99 часов
         decimal_places=2,
         help_text="Количество часов, потраченных на задачу",
-        validators=[MinValueValidator(0.0)],
+        validators=[MinValueValidator(0)],
     )
     description = models.TextField(
         blank=True,

@@ -2,7 +2,7 @@
 <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
   <h1 class="text-2xl font-semibold mb-6">Edit task #{{ task.id }}</h1>
 
-  <form method="post" class="space-y-5 text-sm">
+  <form method="post" class="space-y-5 text-sm mb-6">
     {% csrf_token %}
     <div class="flex flex-row gap-10">
       <div>
@@ -61,8 +61,8 @@
       </div>
     </div>
     <button type="submit" class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium">Save</button>
-    {% include "tasks/comments__work_logs__history.html" %}
   </form>
+  {% include "tasks/comments__work_logs__history.html" %}
 </div>
 <script>
   const projectSelect = document.getElementById("project");
