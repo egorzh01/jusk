@@ -128,7 +128,8 @@ class UTaskForm(forms.ModelForm[Task]):
 
         if log_description and not log_hours:
             self.add_error(
-                "log_hours", "This field is required when description is filled.",
+                "log_hours",
+                "This field is required when description is filled.",
             )
         return cleaned_data
 

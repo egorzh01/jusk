@@ -17,7 +17,7 @@
           <tr class="hover:bg-gray-100 cursor-pointer h-5 text-xs" onclick="window.location.href='{% url 'tasks:task' task.id %}'">
             <td class="border-r border-t border-gray-300 py-2">{{ task.id }}</td>
             <td class="border-r border-t border-gray-300 py-2">{{ task.get_status_display }}</td>
-            <td class="border-r border-t border-gray-300 py-2">{{ task.title }}</td>
+            <td class="border-r border-t border-gray-300 py-2 break-all px-1">{{ task.title }}</td>
             <td class="border-t border-gray-300 py-2">{{ task.updated_at|date:"Y-m-d H:i:s" }}</td>
           </tr>
           {% endfor %}

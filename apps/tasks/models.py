@@ -129,17 +129,17 @@ class TaskHistoryEntry(models.Model):
         ordering = ["-created_at"]
 
 
-class TaskLogTime(WithCreatedAtAndUpdatedAt):
+class TaskTimeLog(WithCreatedAtAndUpdatedAt):
     task = models.ForeignKey(
         "tasks.Task",
         on_delete=models.CASCADE,
-        related_name="log_times",
+        related_name="time_logs",
         editable=False,
     )
     creator = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
-        related_name="log_times",
+        related_name="time_logs",
         editable=False,
     )
     hours = models.DecimalField(
@@ -154,9 +154,9 @@ class TaskLogTime(WithCreatedAtAndUpdatedAt):
     )
 
     class Meta(TypedModelMeta):
-        db_table = "task_log_times"
-        verbose_name = "work log"
-        verbose_name_plural = "work logs"
+        db_table = "task_time_logs"
+        verbose_name = "time log"
+        verbose_name_plural = "time logs"
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
