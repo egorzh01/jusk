@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from apps.tasks.models import Task
+from apps.tasks.models import Task, TaskTimeLog
 from apps.users.models import User
 
 
@@ -18,3 +18,15 @@ class TaskHistoryService:
 
     def add_update_history(self) -> None:
         self.task.history.create(text=f"Task #{self.task.id} updated")
+
+    def add_time_log(
+        self,
+        timelog: TaskTimeLog,
+    ) -> None:
+        if timelog.description:
+            pass
+        self.task.history.create(
+            text=f"Added time log: {timelog.hours}h - {timelog.description}",
+            created_at=timelog.created_at,
+            user=self.user,
+        )

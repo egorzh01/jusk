@@ -44,3 +44,35 @@
 .header-container {
   @apply bg-gray-200 border-b-2 border-gray-300 h-8 flex items-center justify-between;
 }
+
+.form-label {
+  @apply block mb-1 font-medium;
+}
+
+.c-tl-h-button {
+  @apply px-4 py-2 font-medium cursor-pointer text-gray-500 hover:text-gray-700;
+}
+
+.c-tl-h-button.active {
+  @apply border-t border-l border-r border-gray-300 rounded-t bg-white -mb-px text-gray-700;
+}
+
+.c-tl-h-header {
+  @apply flex items-center text-sm text-gray-400 border-b border-gray-300 mb-2;
+}
+
+.с-tl-h-container {
+  @apply flex flex-col gap-3.5;
+}
+
+.с-tl-h-entry {
+  @apply flex flex-col;
+}
+
+.с-tl-h-no-entries {
+  @apply text-gray-500 italic;
+}
+
+.page-title {
+  @apply text-2xl font-semibold;
+}

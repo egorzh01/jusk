@@ -9,6 +9,7 @@ dependencies = [
     "django>=5.2.1",
     "django-browser-reload>=1.18.0",
     "django-stubs-ext>=5.2.0",
+    "djangorestframework>=3.16.0",
     "gunicorn>=23.0.0",
 ]
 
@@ -67,7 +68,7 @@ exclude = [
     "data",
     "tests",
 ]
-plugins = ["mypy_django_plugin.main"]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 
 [tool.django-stubs]
 django_settings_module = "config.settings"
@@ -75,6 +76,7 @@ django_settings_module = "config.settings"
 [dependency-groups]
 dev = [
     "django-stubs[compatible-mypy]>=5.2.0",
+    "djangorestframework-stubs[compatible-mypy]>=3.16.0",
     "mypy>=1.15.0",
     "pre-commit>=4.2.0",
     "ruff>=0.11.11",

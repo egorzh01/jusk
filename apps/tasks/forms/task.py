@@ -71,6 +71,9 @@ class UTaskForm(forms.ModelForm[Task]):
         ),
     )
     log_hours = forms.DecimalField(
+        decimal_places=2,
+        max_digits=5,
+        min_value=0.0,
         required=False,
         widget=forms.NumberInput(
             attrs={
@@ -123,19 +126,15 @@ class UTaskForm(forms.ModelForm[Task]):
     def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
         assert cleaned_data is not None
+
         log_description = cleaned_data.get("log_description")
         log_hours = cleaned_data.get("log_hours")
-
         if log_description and log_hours is None:
             self.add_error(
                 "log_hours",
-                "This field is required when description is filled.",
+                "This field is required when log time description is filled.",
             )
-        if log_hours is not None and log_hours <= 0:
-            self.add_error(
-                "log_hours",
-                "This field must be greater than 0.",
-            )
+
         return cleaned_data
 
 

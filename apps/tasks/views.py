@@ -7,6 +7,8 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
+from rest_framework import permissions
+from rest_framework.views import APIView
 
 from apps.projects.models import Project
 from apps.tasks.forms.task import (
@@ -35,7 +37,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
 class CTaskView(LoginRequiredMixin, TemplateView):
     http_method_names = ["get", "post"]
-    template_name = "tasks/new_task.html"
+    template_name = "tasks/create_task.html"
     extra_context = None
 
     def get_context_data(
@@ -147,8 +149,8 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
             log_description = form.cleaned_data.get("log_description")
             log_hours = form.cleaned_data.get("log_hours")
-            print(log_description, log_hours)
-            if log_description and log_hours:
+            print(type(log_description), log_hours)
+            if log_hours:
                 TaskTimeLog.objects.create(
                     task=task,
                     creator=request.user,
@@ -159,3 +161,38 @@ class UTaskView(LoginRequiredMixin, TemplateView):
                 form.save()
 
         return redirect("tasks:task", task_id=task.id)
+
+
+class TimeLogAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk, user):
+        return get_object_or_404(TimeLog, pk=pk, creator=user)
+
+    def patch(self, request, pk):
+        time_log = self.get_object(pk, request.user)
+        serializer = TimeLogSerializer(time_log, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            
+            # запись в историю
+            History.objects.create(
+                user=request.user,
+                task=time_log.task,
+                text=f"Updated time log: {time_log.hours}h - {time_log.description}"
+            )
+            
+            return Response({
+                'timelog': serializer.data,
+                'history_entry': {
+                    'user': str(request.user),
+                    'created_at': timezone.now().strftime("%Y-%m-%d %H:%M"),
+                    'text': f"Updated time log: {time_log.hours}h - {time_log.description}"
+                }
+            })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        time_log = self.get_object(pk, request.user)
+        time_log.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

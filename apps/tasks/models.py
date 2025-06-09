@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING
+
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_stubs_ext.db.models import TypedModelMeta
+
+if TYPE_CHECKING:
+    pass
 
 
 class TaskStatus(models.TextChoices):
@@ -150,6 +155,7 @@ class TaskTimeLog(WithCreatedAtAndUpdatedAt):
     )
     description = models.TextField(
         blank=True,
+        null=True,
         help_text="Описание выполненной работы (необязательно)",
     )
 
