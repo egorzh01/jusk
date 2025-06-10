@@ -138,13 +138,13 @@ class TaskTimeLog(WithCreatedAtAndUpdatedAt):
     task = models.ForeignKey(
         "tasks.Task",
         on_delete=models.CASCADE,
-        related_name="time_logs",
+        related_name="timelogs",
         editable=False,
     )
     creator = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
-        related_name="time_logs",
+        related_name="timelogs",
         editable=False,
     )
     hours = models.DecimalField(
@@ -160,7 +160,7 @@ class TaskTimeLog(WithCreatedAtAndUpdatedAt):
     )
 
     class Meta(TypedModelMeta):
-        db_table = "task_time_logs"
+        db_table = "task_timelogs"
         verbose_name = "time log"
         verbose_name_plural = "time logs"
         ordering = ["-created_at"]

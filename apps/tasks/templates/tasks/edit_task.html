@@ -1,89 +1,96 @@
-{% extends "base.html" %} {% block content %}
-<div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
-  <h1 class="page-title mb-6">Edit task #{{ task.id }}</h1>
-
-  <form method="post" class="space-y-5 text-sm mb-6">
-    {% csrf_token %}
-    <div class="flex flex-row gap-10">
-      <div>
-        <label for="{{ form.project.id_for_label }}" class="form-label">{{ form.project.label }}</label>
-        {{ form.project }} {% include "form_errors.html" with errors=form.project.errors %}
+{% extends "base.html" %}
+{% block content %}
+  <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
+    <h1 class="page-title mb-6">Edit task #{{ task.id }}</h1>
+    <form method="post" class="space-y-5 text-sm mb-6">
+      {% csrf_token %}
+      <div class="flex flex-row gap-10">
+        <div>
+          <label for="{{ form.project.id_for_label }}" class="form-label">{{ form.project.label }}</label>
+          {{ form.project }}
+          {% include "form_errors.html" with errors=form.project.errors %}
+        </div>
+        <div>
+          <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+          {{ form.status }}
+          {% include "form_errors.html" with errors=form.status.errors %}
+        </div>
+        <div id="executor-container">
+          <label for="{{ form.executor.id_for_label }}" class="form-label">{{ form.executor.label }}</label>
+          {{ form.executor }}
+          {% include "form_errors.html" with errors=form.executor.errors %}
+        </div>
       </div>
       <div>
-        <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
-        {{ form.status }} {% include "form_errors.html" with errors=form.status.errors %}
-      </div>
-
-      <div id="executor-container">
-        <label for="{{ form.executor.id_for_label }}" class="form-label">{{ form.executor.label }}</label>
-        {{ form.executor }} {% include "form_errors.html" with errors=form.executor.errors %}
-      </div>
-    </div>
-
-    <div>
-      <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
-      {{ form.title }} {% include "form_errors.html" with errors=form.title.errors %}
-    </div>
-    <div>
-      <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
-      {{ form.description }} {% include "form_errors.html" with errors=form.description.errors %}
-    </div>
-    <div>
-      <label for="{{ form.comment_text.id_for_label }}" class="form-label">Add comment</label>
-      {{ form.comment_text }} {% include "form_errors.html" with errors=form.comment_text.errors %}
-    </div>
-    <h3 class="form-label">Add log time</h3>
-    <div class="border-l border-gray-300 p-3">
-      <div>
-        <label for="{{ form.log_hours.id_for_label }}" class="form-label">Hours</label>
-        {{ form.log_hours }} {% include "form_errors.html" with errors=form.log_hours.errors %}
+        <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+        {{ form.title }}
+        {% include "form_errors.html" with errors=form.title.errors %}
       </div>
       <div>
-        <label for="{{ form.log_description.id_for_label }}" class="form-label">Description</label>
-        {{ form.log_description }} {% include "form_errors.html" with errors=form.log_description.errors %}
+        <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+        {{ form.description }}
+        {% include "form_errors.html" with errors=form.description.errors %}
       </div>
-    </div>
-    <button type="submit" class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium">Save</button>
-  </form>
-  {% include "tasks/comments__time_logs__history.html" %}
-</div>
-<script>
-  const projectSelect = document.getElementById("project");
-  const executorSelect = document.getElementById("executor");
-  const executorContainer = document.getElementById("executor-container");
+      <div>
+        <label for="{{ form.comment_text.id_for_label }}" class="form-label">Add comment</label>
+        {{ form.comment_text }}
+        {% include "form_errors.html" with errors=form.comment_text.errors %}
+      </div>
+      <h3 class="form-label">Add log time</h3>
+      <div class="border-l border-gray-300 p-3 flex flex-col gap-3">
+        <div>
+          <label for="{{ form.log_hours.id_for_label }}" class="form-label">Hours</label>
+          {{ form.log_hours }}
+          {% include "form_errors.html" with errors=form.log_hours.errors %}
+        </div>
+        <div>
+          <label for="{{ form.log_description.id_for_label }}" class="form-label">Description</label>
+          {{ form.log_description }}
+          {% include "form_errors.html" with errors=form.log_description.errors %}
+        </div>
+      </div>
+      <button type="submit"
+              class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium">Save</button>
+    </form>
+    {% include "tasks/comments__timelogs__history.html" %}
+  </div>
+  <script>
+    const projectSelect = document.getElementById("project");
+    const executorSelect = document.getElementById("executor");
+    const executorContainer = document.getElementById("executor-container");
 
-  const disableExecutorSelect = () => {
-    executorSelect.disabled = true;
-    executorSelect.innerHTML = "";
-    executorSelect.appendChild(new Option("---------", ""));
-    executorContainer.classList.add("text-gray-400");
-    executorContainer.title = "Select project";
-  };
+    const disableExecutorSelect = () => {
+      executorSelect.disabled = true;
+      executorSelect.innerHTML = "";
+      executorSelect.appendChild(new Option("---------", ""));
+      executorContainer.classList.add("text-gray-400");
+      executorContainer.title = "Select project";
+    };
 
-  projectSelect.addEventListener("change", function () {
-    const projectId = this.value;
+    projectSelect.addEventListener("change", function() {
+      const projectId = this.value;
 
-    if (!projectId) {
-      disableExecutorSelect();
-      return;
-    }
-    try {
-      fetch(`/api/projects/${projectId}/members/`)
-        .then((res) => res.json())
-        .then((data) => {
-          executorSelect.disabled = false;
-          executorSelect.innerHTML = "";
-          executorSelect.appendChild(new Option("---------", ""));
-          data.members.forEach((member) => {
-            executorSelect.appendChild(new Option(`${member.name}`, `${member.id}`));
+      if (!projectId) {
+        disableExecutorSelect();
+        return;
+      }
+      try {
+        fetch(`/api/projects/${projectId}/members/`)
+          .then((res) => res.json())
+          .then((data) => {
+            executorSelect.disabled = false;
+            executorSelect.innerHTML = "";
+            executorSelect.appendChild(new Option("---------", ""));
+            data.members.forEach((member) => {
+              executorSelect.appendChild(new Option(`${member.name}`, `${member.id}`));
+            });
           });
-        });
-      executorContainer.classList.remove("text-gray-400");
-      executorContainer.title = "";
-    } catch (error) {
-      disableExecutorSelect();
-      alert("The list of project members could not be retrieved. Please try again later.");
-    }
-  });
-</script>
+        executorContainer.classList.remove("text-gray-400");
+        executorContainer.title = "";
+      } catch (error) {
+        disableExecutorSelect();
+        alert("The list of project members could not be retrieved. Please try again later.");
+      }
+    });
+  </script>
 {% endblock content %}

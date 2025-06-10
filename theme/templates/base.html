@@ -8,12 +8,33 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <meta name="csrf-token" content="{{ csrf_token }}" />
     <link href="{% static 'css/dist/style.css' %}" rel="stylesheet" />
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet" />
+    <script defer
+            src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap"
+          rel="stylesheet" />
   </head>
-
   <body class="flex flex-col h-screen overflow-hidden border-2 border-gray-300 text-gray-700">
     {% include "header.html" %}
-    <main class="flex flex-row h-[calc(100%-2rem)]">{% include "sidebar.html" %}{% block content %}{% endblock %}</main>
+    <main class="flex flex-row h-[calc(100%-2rem)]">
+      {% include "sidebar.html" %}
+      {% block content %}
+      {% endblock content %}
+    </main>
   </body>
+  <script>
+    function formatDate(date) {
+      d = new Date(date);
+      const formattedDate = new Intl.DateTimeFormat('en-CA', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).format(d)
+        .replace(/(\d{4})-(\d{2})-(\d{2}),?/, '$1-$2-$3') // Убираем запятую, если есть
+        .replace(/(\d{2}):(\d{2})/, '$1:$2'); // Убираем AM/PM
+      return formattedDate
+    }
+  </script>
 </html>

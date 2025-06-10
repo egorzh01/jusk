@@ -87,8 +87,6 @@ class TaskAdmin(admin.ModelAdmin[Task]):
                 user=cast(User, request.user),
             )
             if change:
-                history_service.add_update_history()
+                history_service.update()
             else:
-                history_service.add_create_history(
-                    task_created_at=obj.created_at,
-                )
+                history_service.create()

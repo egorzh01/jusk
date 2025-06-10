@@ -1,7 +1,5 @@
 {% if errors %}
-<div class="text-red-400 text-sm mb-5">
-  {% for error in errors %}
-  <p>{{ error }}</p>
-  {% endfor %}
-</div>
+  <div class="text-red-400 text-sm mb-5">
+    {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+  </div>
 {% endif %}

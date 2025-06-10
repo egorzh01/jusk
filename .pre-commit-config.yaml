@@ -33,3 +33,12 @@ repos:
         types: [python]
         args:
           - .
+
+      - id: djlint
+        name: Run djlint lints
+        entry: uv run djlint
+        language: system
+        pass_filenames: false
+        types: [html]
+        args:
+          - "."
