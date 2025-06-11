@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Sum
+from django.forms import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
@@ -17,8 +18,14 @@ from apps.tasks.forms.task import (
     UTaskForm,
 )
 from apps.tasks.models import Task, TaskComment, TaskTimeLog
-from apps.tasks.serializers import TimeLogSerializer
-from apps.tasks.services.task_history import TaskHistoryService, TimeLogOldValues
+from apps.tasks.serializers import CommentSerializer, TimeLogSerializer
+from apps.tasks.services.task_history import (
+    TaskCommentOldValues,
+    TaskHistoryService,
+    TaskOldValues,
+    TimeLogOldValues,
+)
+from apps.tasks.services.tasks import check_task
 from apps.users.models import User
 from config.typess import AuthenticatedHttpRequest, AuthenticatedRequest
 
@@ -70,7 +77,18 @@ class CTaskView(LoginRequiredMixin, TemplateView):
         form = CTaskForm(request.POST)
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
+
         form.instance.creator = request.user
+        if not check_task(
+            status=form.instance.status,
+            project=form.instance.project,
+            user=request.user,
+            executor=form.instance.executor,
+            old_values=None,
+        ):
+            raise ValidationError(
+                "Вы не имеете прав для редактирования данной задачи",
+            )
         with transaction.atomic():
             task = form.save()
             history_service = TaskHistoryService(
@@ -138,6 +156,23 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
+        if not check_task(
+            status=form.instance.status,
+            project=form.instance.project,
+            user=request.user,
+            executor=form.instance.executor,
+            old_values=TaskOldValues(
+                title=task.title,
+                description=task.description,
+                project_id=task.project_id,
+                executor_id=task.executor_id,
+                status=task.status,
+                parent_id=task.parent_id,
+            ),
+        ):
+            raise ValidationError(
+                "Вы не имеете прав для редактирования данной задачи",
+            )
         history_service = TaskHistoryService(
             task=task,
             user=request.user,
@@ -218,6 +253,99 @@ class TimeLogAPIView(APIView):
                 "history_entry": {
                     "user": str(request.user),
                     "created_at": timelog.created_at,
+                    "text": history_entry.text,
+                }
+                if history_entry
+                else None,
+            },
+        )
+
+    def delete(
+        self,
+        request: AuthenticatedRequest,
+        timelog_id: int,
+        task_id: int,
+    ) -> Response:
+        timelog = get_object_or_404(
+            TaskTimeLog,
+            id=timelog_id,
+            creator=request.user,
+            task_id=task_id,
+        )
+        with transaction.atomic():
+            timelog.delete()
+            history_service = TaskHistoryService(
+                task=timelog.task,
+                user=request.user,
+            )
+            history_entry = history_service.delete_timelog(timelog)
+        total_hours = (
+            TaskTimeLog.objects.filter(task=timelog.task).aggregate(Sum("hours"))[
+                "hours__sum"
+            ]
+            or 0
+        )
+        return Response(
+            data={
+                "total_hours": f"{total_hours:.2f}",
+                "history_entry": {
+                    "user": str(request.user),
+                    "created_at": timelog.created_at,
+                    "text": history_entry.text,
+                },
+            },
+        )
+
+
+class CommentAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(
+        self,
+        request: AuthenticatedRequest,
+        task_id: int,
+        comment_id: int,
+    ) -> Response:
+        comment = get_object_or_404(
+            TaskComment,
+            id=comment_id,
+            creator=request.user,
+            task_id=task_id,
+        )
+        old_values = TaskCommentOldValues(
+            text=comment.text,
+        )
+        serializer = CommentSerializer(
+            comment,
+            data=request.data,
+            partial=True,
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            serializer.save()
+
+            history_service = TaskHistoryService(
+                task=comment.task,
+                user=request.user,
+            )
+            history_entry = history_service.update_comment(
+                comment=comment,
+                old_values=old_values,
+            )
+        total_hours = (
+            TaskTimeLog.objects.filter(task=comment.task).aggregate(Sum("hours"))[
+                "hours__sum"
+            ]
+            or 0
+        )
+        return Response(
+            data={
+                "timelog": serializer.data,
+                "total_hours": f"{total_hours:.2f}",
+                "history_entry": {
+                    "user": str(request.user),
+                    "created_at": comment.created_at,
                     "text": history_entry.text,
                 }
                 if history_entry

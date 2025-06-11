@@ -2,18 +2,10 @@ from typing import TYPE_CHECKING
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django_stubs_ext.db.models import TypedModelMeta
 
 if TYPE_CHECKING:
     pass
-
-
-class TaskStatus(models.TextChoices):
-    NEW = "NEW", _("New")
-    IN_PROGRESS = "IN_PROGRESS", _("In progress")
-    DONE = "DONE", _("Done")
-    CANCELED = "CANCELED", _("Canceled")
 
 
 class WithCreatedAtAndUpdatedAt(models.Model):
@@ -31,8 +23,7 @@ class WithCreatedAtAndUpdatedAt(models.Model):
 
 class Task(WithCreatedAtAndUpdatedAt):
     status = models.CharField(
-        choices=TaskStatus.choices,
-        default=TaskStatus.NEW,
+        max_length=32,
     )
     title = models.CharField(
         max_length=128,

@@ -58,3 +58,34 @@ class ProjectMember(models.Model):
                 name="unique_project_member",
             ),
         ]
+
+
+class ProjectStatus(models.Model):
+    project = models.ForeignKey(
+        "projects.Project",
+        on_delete=models.CASCADE,
+        related_name="statuses",
+    )
+    status = models.CharField(
+        max_length=32,
+    )
+    position = models.PositiveSmallIntegerField()
+
+    def __str__(self) -> str:
+        return f"{self.position} - {self.project} - {self.status}"
+
+    class Meta(TypedModelMeta):
+        db_table = "project_statuses"
+        verbose_name = "project status"
+        verbose_name_plural = "project statuses"
+        ordering = ["position"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "status"],
+                name="unique_project_status",
+            ),
+            models.UniqueConstraint(
+                fields=["project", "position"],
+                name="unique_project_status_position",
+            ),
+        ]

@@ -1,13 +1,31 @@
 from decimal import Decimal
 from typing import TypedDict
 
-from apps.tasks.models import Task, TaskComment, TaskHistoryEntry, TaskTimeLog
+from apps.tasks.models import (
+    Task,
+    TaskComment,
+    TaskHistoryEntry,
+    TaskTimeLog,
+)
 from apps.users.models import User
+
+
+class TaskOldValues(TypedDict):
+    title: str
+    description: str
+    status: str
+    executor_id: int | None
+    project_id: int
+    parent_id: int | None
 
 
 class TimeLogOldValues(TypedDict):
     hours: Decimal
     description: str | None
+
+
+class TaskCommentOldValues(TypedDict):
+    text: str
 
 
 class TaskHistoryService:
@@ -37,10 +55,9 @@ class TaskHistoryService:
         self,
         timelog: TaskTimeLog,
     ) -> TaskHistoryEntry:
-        if timelog.description:
-            pass
         return self.task.history.create(
-            text=f"Added time log: {timelog.hours}h, {timelog.description}",
+            text=f"Added time log: {timelog.hours}h"
+            + (" and description" if timelog.description else ""),
             created_at=timelog.created_at,
             user=self.user,
             task=self.task,
@@ -53,9 +70,9 @@ class TaskHistoryService:
     ) -> TaskHistoryEntry | None:
         changes = []
         if old_values["hours"] != timelog.hours:
-            changes.append(f"Hours: {old_values['hours']} -> {timelog.hours}")
+            changes.append(f"hours: {old_values['hours']} → {timelog.hours}")
         if old_values["description"] != timelog.description:
-            changes.append(f"Description: {timelog.description}")
+            changes.append("description updated")
         if not changes:
             return None
         return self.task.history.create(
@@ -67,7 +84,7 @@ class TaskHistoryService:
 
     def delete_timelog(self, timelog: TaskTimeLog) -> TaskHistoryEntry:
         return self.task.history.create(
-            text=f"Deleted time log: {timelog.hours}h - {timelog.description}",
+            text=f"Deleted time log: {timelog.hours}h",
             created_at=timelog.created_at,
             user=self.user,
             task=self.task,
@@ -75,7 +92,7 @@ class TaskHistoryService:
 
     def add_comment(self, comment: TaskComment) -> TaskHistoryEntry:
         return self.task.history.create(
-            text=f"Added comment: {comment.text}",
+            text="Left comment",
             created_at=comment.created_at,
             user=self.user,
             task=self.task,
@@ -84,13 +101,12 @@ class TaskHistoryService:
     def update_comment(
         self,
         comment: TaskComment,
-        old_comment: TaskComment,
+        old_values: TaskCommentOldValues,
     ) -> TaskHistoryEntry | None:
-        changes = []
-        if old_comment.text != comment.text:
-            changes.append(f"{comment.text}")
+        if old_values["text"] == comment.text:
+            return None
         return self.task.history.create(
-            text=f"Updated comment: {', '.join(changes)}",
+            text="Updated comment",
             created_at=comment.updated_at,
             user=self.user,
             task=self.task,
@@ -98,7 +114,7 @@ class TaskHistoryService:
 
     def delete_comment(self, comment: TaskComment) -> TaskHistoryEntry:
         return self.task.history.create(
-            text=f"Deleted comment: {comment.text}",
+            text="Deleted comment",
             created_at=comment.created_at,
             user=self.user,
             task=self.task,
