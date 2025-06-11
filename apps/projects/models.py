@@ -66,13 +66,13 @@ class ProjectStatus(models.Model):
         on_delete=models.CASCADE,
         related_name="statuses",
     )
-    status = models.CharField(
+    name = models.CharField(
         max_length=32,
     )
     position = models.PositiveSmallIntegerField()
 
     def __str__(self) -> str:
-        return f"{self.position} - {self.project} - {self.status}"
+        return f"{self.name}"
 
     class Meta(TypedModelMeta):
         db_table = "project_statuses"
@@ -81,11 +81,11 @@ class ProjectStatus(models.Model):
         ordering = ["position"]
         constraints = [
             models.UniqueConstraint(
-                fields=["project", "status"],
-                name="unique_project_status",
+                fields=["project", "name"],
+                name="unique_project_name",
             ),
             models.UniqueConstraint(
                 fields=["project", "position"],
-                name="unique_project_status_position",
+                name="unique_project_position",
             ),
         ]

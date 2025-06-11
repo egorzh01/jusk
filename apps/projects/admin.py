@@ -97,20 +97,17 @@ class ProjectMemberAdmin(admin.ModelAdmin[ProjectMember]):
 
 @admin.register(ProjectStatus)
 class ProjectStatusAdmin(admin.ModelAdmin[ProjectStatus]):
-    ordering = ["status", "project"]
-    filter = (
-        "status",
-        "project",
-    )
-    list_display = ["status", "project"]
-    search_fields = ["status", "project"]
-    list_filter = ["status", "project"]
+    ordering = ["name", "project", "position"]
+    filter = ("name", "project", "position")
+    list_display = ["name", "project", "position"]
+    search_fields = ["name", "project", "position"]
+    list_filter = ["name", "project", "position"]
 
     fieldsets = (
         (
             _("Info"),
             {
-                "fields": ("status", "project"),
+                "fields": ("name", "project", "position"),
             },
         ),
     )
@@ -120,7 +117,7 @@ class ProjectStatusAdmin(admin.ModelAdmin[ProjectStatus]):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("status", "project"),
+                "fields": ("name", "project", "position"),
             },
         ),
     )

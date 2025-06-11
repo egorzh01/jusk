@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
+  {% load static %}
   <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
     <h1 class="page-title mb-6">Edit task #{{ task.id }}</h1>
     <form method="post" class="space-y-5 text-sm mb-6">
@@ -10,7 +11,7 @@
           {{ form.project }}
           {% include "form_errors.html" with errors=form.project.errors %}
         </div>
-        <div>
+        <div id="status-container">
           <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
           {{ form.status }}
           {% include "form_errors.html" with errors=form.status.errors %}
@@ -54,43 +55,5 @@
     </form>
     {% include "tasks/comments__timelogs__history.html" %}
   </div>
-  <script>
-    const projectSelect = document.getElementById("project");
-    const executorSelect = document.getElementById("executor");
-    const executorContainer = document.getElementById("executor-container");
-
-    const disableExecutorSelect = () => {
-      executorSelect.disabled = true;
-      executorSelect.innerHTML = "";
-      executorSelect.appendChild(new Option("---------", ""));
-      executorContainer.classList.add("text-gray-400");
-      executorContainer.title = "Select project";
-    };
-
-    projectSelect.addEventListener("change", function() {
-      const projectId = this.value;
-
-      if (!projectId) {
-        disableExecutorSelect();
-        return;
-      }
-      try {
-        fetch(`/api/projects/${projectId}/members/`)
-          .then((res) => res.json())
-          .then((data) => {
-            executorSelect.disabled = false;
-            executorSelect.innerHTML = "";
-            executorSelect.appendChild(new Option("---------", ""));
-            data.members.forEach((member) => {
-              executorSelect.appendChild(new Option(`${member.name}`, `${member.id}`));
-            });
-          });
-        executorContainer.classList.remove("text-gray-400");
-        executorContainer.title = "";
-      } catch (error) {
-        disableExecutorSelect();
-        alert("The list of project members could not be retrieved. Please try again later.");
-      }
-    });
-  </script>
+  <script src="{% static 'js/tasks/selectProject.js' %}"></script>
 {% endblock content %}

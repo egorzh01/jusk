@@ -25,12 +25,6 @@ class CTaskForm(forms.ModelForm[Task]):
                     "rows": 12,
                 },
             ),
-            "status": forms.Select(
-                attrs={
-                    "id": "status",
-                    "class": "rounded border border-gray-300 p-1",
-                },
-            ),
             "project": forms.Select(
                 attrs={
                     "id": "project",
@@ -40,6 +34,13 @@ class CTaskForm(forms.ModelForm[Task]):
             "executor": forms.Select(
                 attrs={
                     "id": "executor",
+                    "class": "rounded border border-gray-300 p-1",
+                    "disabled": True,
+                },
+            ),
+            "status": forms.Select(
+                attrs={
+                    "id": "status",
                     "class": "rounded border border-gray-300 p-1",
                     "disabled": True,
                 },
@@ -103,12 +104,6 @@ class UTaskForm(forms.ModelForm[Task]):
                     "rows": 12,
                 },
             ),
-            "status": forms.Select(
-                attrs={
-                    "id": "status",
-                    "class": "rounded border border-gray-300 p-1",
-                },
-            ),
             "project": forms.Select(
                 attrs={
                     "id": "project",
@@ -118,6 +113,12 @@ class UTaskForm(forms.ModelForm[Task]):
             "executor": forms.Select(
                 attrs={
                     "id": "executor",
+                    "class": "rounded border border-gray-300 p-1",
+                },
+            ),
+            "status": forms.Select(
+                attrs={
+                    "id": "status",
                     "class": "rounded border border-gray-300 p-1",
                 },
             ),

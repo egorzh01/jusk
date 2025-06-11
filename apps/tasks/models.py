@@ -22,9 +22,6 @@ class WithCreatedAtAndUpdatedAt(models.Model):
 
 
 class Task(WithCreatedAtAndUpdatedAt):
-    status = models.CharField(
-        max_length=32,
-    )
     title = models.CharField(
         max_length=128,
     )
@@ -67,6 +64,12 @@ class Task(WithCreatedAtAndUpdatedAt):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="+",
+    )
+    status = models.ForeignKey(
+        "projects.ProjectStatus",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
 
     def __str__(self) -> str:

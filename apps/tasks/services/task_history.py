@@ -13,7 +13,7 @@ from apps.users.models import User
 class TaskOldValues(TypedDict):
     title: str
     description: str
-    status: str
+    status_id: int | None
     executor_id: int | None
     project_id: int
     parent_id: int | None

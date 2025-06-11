@@ -4,7 +4,6 @@ from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Sum
-from django.forms import ValidationError
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import TemplateView
@@ -12,7 +11,7 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.projects.models import Project
+from apps.projects.models import Project, ProjectStatus
 from apps.tasks.forms.task import (
     CTaskForm,
     UTaskForm,
@@ -77,18 +76,13 @@ class CTaskView(LoginRequiredMixin, TemplateView):
         form = CTaskForm(request.POST)
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
-
         form.instance.creator = request.user
-        if not check_task(
-            status=form.instance.status,
+        check_task(
+            status_id=form.instance.status_id,
             project=form.instance.project,
             user=request.user,
             executor=form.instance.executor,
-            old_values=None,
-        ):
-            raise ValidationError(
-                "Вы не имеете прав для редактирования данной задачи",
-            )
+        )
         with transaction.atomic():
             task = form.save()
             history_service = TaskHistoryService(
@@ -107,7 +101,12 @@ class TaskView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        task = get_object_or_404(Task, pk=self.kwargs["task_id"])
+        task = get_object_or_404(
+            Task.objects.filter(
+                project__members__user=cast(AuthenticatedHttpRequest, self.request).user
+            ),
+            id=self.kwargs["task_id"],
+        )
         context["task"] = task
         total_hours = (
             TaskTimeLog.objects.filter(task=task).aggregate(Sum("hours"))["hours__sum"]
@@ -124,19 +123,31 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        task = Task.objects.get(pk=self.kwargs["task_id"])
+        task = get_object_or_404(
+            Task.objects.filter(
+                project__members__user=cast(AuthenticatedHttpRequest, self.request).user
+            ),
+            id=self.kwargs["task_id"],
+        )
         context["task"] = task
         if not context.get("form"):
             form = UTaskForm(instance=context["task"])
             executor_field = cast(forms.ModelChoiceField[User], form.fields["executor"])
             executor_field.queryset = User.objects.filter(project=task.project)
             project_field = cast(
-                forms.ModelChoiceField[Project],
-                form.fields["project"],
+                forms.ModelChoiceField[Project], form.fields["project"]
             )
             project_field.queryset = Project.objects.filter(
                 members__user=cast(User, self.request.user),
             )
+            status_field = cast(
+                forms.ModelChoiceField[ProjectStatus], form.fields["status"]
+            )
+            statuses_qs = ProjectStatus.objects.filter(project=task.project)
+            if statuses_qs.exists():
+                status_field.empty_label = None
+            else:
+                status_field.queryset = ProjectStatus.objects.none()
             context["form"] = form
 
         return context
@@ -147,8 +158,20 @@ class UTaskView(LoginRequiredMixin, TemplateView):
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        task = get_object_or_404(Task, pk=self.kwargs["task_id"])
-
+        task = get_object_or_404(
+            Task.objects.filter(
+                project__members__user=cast(AuthenticatedHttpRequest, self.request).user
+            ),
+            id=self.kwargs["task_id"],
+        )
+        old_values = TaskOldValues(
+            title=task.title,
+            description=task.description,
+            project_id=task.project_id,
+            executor_id=task.executor_id,
+            status_id=task.status_id,
+            parent_id=task.parent_id,
+        )
         form = UTaskForm(
             request.POST,
             instance=task,
@@ -156,23 +179,13 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
-        if not check_task(
-            status=form.instance.status,
+        check_task(
+            status_id=form.instance.status_id,
             project=form.instance.project,
             user=request.user,
             executor=form.instance.executor,
-            old_values=TaskOldValues(
-                title=task.title,
-                description=task.description,
-                project_id=task.project_id,
-                executor_id=task.executor_id,
-                status=task.status,
-                parent_id=task.parent_id,
-            ),
-        ):
-            raise ValidationError(
-                "Вы не имеете прав для редактирования данной задачи",
-            )
+            old_values=old_values,
+        )
         history_service = TaskHistoryService(
             task=task,
             user=request.user,
@@ -205,6 +218,7 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
 class TimeLogAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["patch", "delete"]
 
     def patch(
         self,
@@ -299,6 +313,7 @@ class TimeLogAPIView(APIView):
 
 class CommentAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["patch", "delete"]
 
     def patch(
         self,
