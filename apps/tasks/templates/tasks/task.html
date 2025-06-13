@@ -15,13 +15,7 @@
         </div>
         <div>
           <label class="block font-medium">Status</label>
-          <p class="pt-2 border-t border-gray-300 min-w-30">
-            {% if task.status %}
-              {{ task.status.name }}
-            {% else %}
-              No status
-            {% endif %}
-          </p>
+          <p class="pt-2 border-t border-gray-300 min-w-30">{{ task.display_status }}</p>
         </div>
         <div>
           <label class="block font-medium">Executor</label>

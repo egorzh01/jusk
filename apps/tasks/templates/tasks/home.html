@@ -18,7 +18,7 @@
               <tr class="hover:bg-gray-100 cursor-pointer h-5 text-xs"
                   onclick="window.location.href='{% url 'tasks:task' task.id %}'">
                 <td class="border-r border-t border-gray-300 py-2">{{ task.id }}</td>
-                <td class="border-r border-t border-gray-300 py-2">{{ task.status. }}</td>
+                <td class="border-r border-t border-gray-300 py-2">{{ task.display_status }}</td>
                 <td class="border-r border-t border-gray-300 py-2 break-all px-1">{{ task.title }}</td>
                 <td class="border-t border-gray-300 py-2">{{ task.updated_at|date:"Y-m-d H:i:s" }}</td>
               </tr>
@@ -28,8 +28,8 @@
       </div>
     </div>
     {% comment %}
-      <div class="row-span-2 bg-gray-400 p-4">История</div>
       <div class="bg-gray-200 p-4">Проекты</div>
+      <div class="row-span-2 bg-gray-400 p-4">История</div>
       <div class="bg-gray-300 p-4">Трудозатраты</div>
     {% endcomment %}
   </div>

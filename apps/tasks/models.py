@@ -75,6 +75,11 @@ class Task(WithCreatedAtAndUpdatedAt):
     def __str__(self) -> str:
         return self.title
 
+    def display_status(self) -> str:
+        if not self.status:
+            return "No status"
+        return self.status.name
+
     class Meta(TypedModelMeta):
         db_table = "tasks"
         verbose_name = "task"

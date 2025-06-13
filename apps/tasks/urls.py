@@ -1,6 +1,12 @@
 from django.urls import path
 
-from apps.tasks.views import CTaskView, TaskView, TimeLogAPIView, UTaskView
+from apps.tasks.views import (
+    CTaskView,
+    TaskCommentAPIView,
+    TaskTimeLogAPIView,
+    TaskView,
+    UTaskView,
+)
 
 app_name = "tasks"
 
@@ -22,7 +28,12 @@ urlpatterns = [
     ),
     path(
         "<int:task_id>/timelogs/<int:timelog_id>/",
-        TimeLogAPIView.as_view(),
+        TaskTimeLogAPIView.as_view(),
         name="timelog_detail",
+    ),
+    path(
+        "<int:task_id>/comments/<int:comment_id>/",
+        TaskCommentAPIView.as_view(),
+        name="comment_detail",
     ),
 ]

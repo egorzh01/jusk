@@ -50,8 +50,13 @@
           {% include "form_errors.html" with errors=form.log_description.errors %}
         </div>
       </div>
-      <button type="submit"
-              class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium">Save</button>
+      <div class="flex flex-row gap-15">
+        <button type="submit"
+                class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium">Save</button>
+        <button type="button"
+                onclick="window.history.back();"
+                class="rounded border border-gray-300 p-1 hover:bg-gray-300 font-medium text-red-500">Cancel</button>
+      </div>
     </form>
     {% include "tasks/comments__timelogs__history.html" %}
   </div>

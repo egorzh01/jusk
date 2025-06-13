@@ -18,13 +18,13 @@ from apps.tasks.forms.task import (
 )
 from apps.tasks.models import Task, TaskComment, TaskTimeLog
 from apps.tasks.serializers import CommentSerializer, TimeLogSerializer
+from apps.tasks.services.task_checker import TaskChecker
 from apps.tasks.services.task_history import (
     TaskCommentOldValues,
     TaskHistoryService,
     TaskOldValues,
     TimeLogOldValues,
 )
-from apps.tasks.services.tasks import check_task
 from apps.users.models import User
 from config.typess import AuthenticatedHttpRequest, AuthenticatedRequest
 
@@ -77,7 +77,7 @@ class CTaskView(LoginRequiredMixin, TemplateView):
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
         form.instance.creator = request.user
-        check_task(
+        TaskChecker.check_all(
             status_id=form.instance.status_id,
             project=form.instance.project,
             user=request.user,
@@ -179,7 +179,7 @@ class UTaskView(LoginRequiredMixin, TemplateView):
 
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
-        check_task(
+        TaskChecker.check_all(
             status_id=form.instance.status_id,
             project=form.instance.project,
             user=request.user,
@@ -191,6 +191,8 @@ class UTaskView(LoginRequiredMixin, TemplateView):
             user=request.user,
         )
         with transaction.atomic():
+            if form.has_changed():
+                form.save()
             comment_text = form.cleaned_data.get("comment_text")
             if comment_text:
                 comment = TaskComment.objects.create(
@@ -210,13 +212,11 @@ class UTaskView(LoginRequiredMixin, TemplateView):
                     hours=log_hours,
                 )
                 history_service.add_timelog(timelog)
-            if log_hours or form.has_changed():
-                form.save()
 
         return redirect("tasks:task", task_id=task.id)
 
 
-class TimeLogAPIView(APIView):
+class TaskTimeLogAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["patch", "delete"]
 
@@ -266,7 +266,7 @@ class TimeLogAPIView(APIView):
                 "total_hours": f"{total_hours:.2f}",
                 "history_entry": {
                     "user": str(request.user),
-                    "created_at": timelog.created_at,
+                    "created_at": history_entry.created_at,
                     "text": history_entry.text,
                 }
                 if history_entry
@@ -304,14 +304,14 @@ class TimeLogAPIView(APIView):
                 "total_hours": f"{total_hours:.2f}",
                 "history_entry": {
                     "user": str(request.user),
-                    "created_at": timelog.created_at,
+                    "created_at": history_entry.created_at,
                     "text": history_entry.text,
                 },
             },
         )
 
 
-class CommentAPIView(APIView):
+class TaskCommentAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     http_method_names = ["patch", "delete"]
 
@@ -348,19 +348,12 @@ class CommentAPIView(APIView):
                 comment=comment,
                 old_values=old_values,
             )
-        total_hours = (
-            TaskTimeLog.objects.filter(task=comment.task).aggregate(Sum("hours"))[
-                "hours__sum"
-            ]
-            or 0
-        )
         return Response(
             data={
-                "timelog": serializer.data,
-                "total_hours": f"{total_hours:.2f}",
+                "comment": serializer.data,
                 "history_entry": {
                     "user": str(request.user),
-                    "created_at": comment.created_at,
+                    "created_at": history_entry.created_at,
                     "text": history_entry.text,
                 }
                 if history_entry
@@ -371,34 +364,27 @@ class CommentAPIView(APIView):
     def delete(
         self,
         request: AuthenticatedRequest,
-        timelog_id: int,
+        comment_id: int,
         task_id: int,
     ) -> Response:
-        timelog = get_object_or_404(
-            TaskTimeLog,
-            id=timelog_id,
+        comment = get_object_or_404(
+            TaskComment,
+            id=comment_id,
             creator=request.user,
             task_id=task_id,
         )
         with transaction.atomic():
-            timelog.delete()
+            comment.delete()
             history_service = TaskHistoryService(
-                task=timelog.task,
+                task=comment.task,
                 user=request.user,
             )
-            history_entry = history_service.delete_timelog(timelog)
-        total_hours = (
-            TaskTimeLog.objects.filter(task=timelog.task).aggregate(Sum("hours"))[
-                "hours__sum"
-            ]
-            or 0
-        )
+            history_entry = history_service.delete_comment(comment)
         return Response(
             data={
-                "total_hours": f"{total_hours:.2f}",
                 "history_entry": {
                     "user": str(request.user),
-                    "created_at": timelog.created_at,
+                    "created_at": history_entry.created_at,
                     "text": history_entry.text,
                 },
             },
