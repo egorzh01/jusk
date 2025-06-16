@@ -23,7 +23,7 @@
              x-data="commentComponent({{ comment.id }}, '{{ comment.text|escapejs }}', '{% url "tasks:comment_detail" task_id=task.id comment_id=comment.id %}')"
              class="с-tl-h-entry">
           <div class="c-tl-h-header">
-            <span>#{{ comment.id }}, {{ comment.creator }}, {{ comment.created_at|date:"Y-m-d H:i" }}
+            <span>#{{ comment.number }}, {{ comment.creator }}, {{ comment.created_at|date:"Y-m-d H:i" }}
               {% if comment.was_updated %}(upd. {{ comment.updated_at|date:"Y-m-d H:i" }}){% endif %}
             </span>
             {% if comment.creator == user %}
@@ -67,7 +67,7 @@
              x-data="timeLogComponent({{ timelog.id }}, '{{ timelog.hours }}', '{{ timelog.description|escapejs }}', '{% url "tasks:timelog_detail" task_id=task.id timelog_id=timelog.id %}')"
              class="с-tl-h-entry">
           <div class="c-tl-h-header">
-            <span>#{{ timelog.id }}, {{ timelog.creator }}, {{ timelog.created_at|date:"Y-m-d H:i" }}
+            <span>#{{ timelog.number }}, {{ timelog.creator }}, {{ timelog.created_at|date:"Y-m-d H:i" }}
               {% if timelog.was_updated %}(upd. {{ timelog.updated_at|date:"Y-m-d H:i" }}){% endif %}
             </span>
             {% if timelog.creator == user %}

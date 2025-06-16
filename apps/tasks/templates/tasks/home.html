@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="grid grid-cols-4 grid-rows-2 w-full">
-    <div class="row-span-2 col-span-2 p-4">
+  <div class="grid grid-cols-4 grid-rows-8 w-full h-full">
+    <div class="col-start-1 row-start-1 row-span-5 col-span-2 p-4 flex flex-col">
       <h1 class="text-xl text-center mb-3">My tasks</h1>
-      <div class="overflow-y-auto max-h-180 border border-gray-300 rounded scrollarea">
+      <div class="overflow-y-auto max-h-full border border-gray-300 rounded scrollarea">
         <table class="table-fixed w-full text-center text-sm">
           <thead class="bg-gray-100 font-semibold top-0 z-10 sticky">
             <tr>
-              <th class="w-1/6 border-r border-gray-300 bg-gray-100">#</th>
+              <th class="w-2/16 border-r border-gray-300 bg-gray-100">#</th>
               <th class="w-1/5 border-r border-gray-300 bg-gray-100">Status</th>
               <th class="w-1/2 border-r border-gray-300 bg-gray-100">Title</th>
               <th class="w-1/5 border-gray-300 bg-gray-100">Updated</th>
@@ -18,9 +18,29 @@
               <tr class="hover:bg-gray-100 cursor-pointer h-5 text-xs"
                   onclick="window.location.href='{% url 'tasks:task' task.id %}'">
                 <td class="border-r border-t border-gray-300 py-2">{{ task.id }}</td>
-                <td class="border-r border-t border-gray-300 py-2">{{ task.display_status }}</td>
+                <td class="border-r border-t border-gray-300 px-1 py-2 truncate">{{ task.display_status }}</td>
                 <td class="border-r border-t border-gray-300 py-2 break-all px-1">{{ task.title }}</td>
                 <td class="border-t border-gray-300 py-2">{{ task.updated_at|date:"Y-m-d H:i:s" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row-start-6 row-span-3 col-span-1 p-4 flex flex-col">
+      <h1 class="text-xl text-center mb-3">My projects</h1>
+      <div class="overflow-y-auto max-h-full border border-gray-300 rounded scrollarea">
+        <table class="table-fixed w-full text-center text-sm">
+          <thead class="bg-gray-100 font-semibold top-0 z-10 sticky">
+            <tr>
+              <th class="border-r border-gray-300 bg-gray-100">Title</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for project in projects %}
+              <tr class="hover:bg-gray-100 cursor-pointer h-5 text-xs"
+                  onclick="window.location.href='{% url 'projects:project' project_id=project.id %}'">
+                <td class="border-r border-t border-gray-300 px-1 py-2 truncate">{{ project.title }}</td>
               </tr>
             {% endfor %}
           </tbody>

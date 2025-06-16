@@ -25,6 +25,12 @@ class Task(WithCreatedAtAndUpdatedAt):
     title = models.CharField(
         max_length=128,
     )
+    last_comment_number = models.PositiveIntegerField(
+        default=0,
+    )
+    last_timelog_number = models.PositiveIntegerField(
+        default=0,
+    )
     description = models.TextField()
     executor = models.ForeignKey(
         "users.User",
@@ -88,10 +94,7 @@ class Task(WithCreatedAtAndUpdatedAt):
 
 
 class TaskComment(WithCreatedAtAndUpdatedAt):
-    task = models.ForeignKey(
-        "tasks.Task",
-        on_delete=models.CASCADE,
-        related_name="comments",
+    number = models.PositiveIntegerField(
         editable=False,
     )
     text = models.TextField()
@@ -100,12 +103,24 @@ class TaskComment(WithCreatedAtAndUpdatedAt):
         on_delete=models.CASCADE,
         editable=False,
     )
+    task = models.ForeignKey(
+        "tasks.Task",
+        on_delete=models.CASCADE,
+        related_name="comments",
+        editable=False,
+    )
 
     class Meta(TypedModelMeta):
         db_table = "task_comments"
         verbose_name = "task comment"
         verbose_name_plural = "task comments"
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["task", "number"],
+                name="task_comment__task_number_unique",
+            ),
+        ]
 
 
 class TaskHistoryEntry(models.Model):
@@ -134,6 +149,9 @@ class TaskHistoryEntry(models.Model):
 
 
 class TaskTimeLog(WithCreatedAtAndUpdatedAt):
+    number = models.PositiveIntegerField(
+        editable=False,
+    )
     task = models.ForeignKey(
         "tasks.Task",
         on_delete=models.CASCADE,
@@ -163,6 +181,9 @@ class TaskTimeLog(WithCreatedAtAndUpdatedAt):
         verbose_name = "time log"
         verbose_name_plural = "time logs"
         ordering = ["-created_at"]
-
-    def __str__(self) -> str:
-        return f"{self.creator} — {self.task} — {self.hours} ч."
+        constraints = [
+            models.UniqueConstraint(
+                fields=["task", "number"],
+                name="task_timelog__task_number_unique",
+            ),
+        ]

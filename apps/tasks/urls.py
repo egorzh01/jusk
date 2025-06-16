@@ -4,8 +4,8 @@ from apps.tasks.views import (
     CTaskView,
     TaskCommentAPIView,
     TaskTimeLogAPIView,
+    TaskUView,
     TaskView,
-    UTaskView,
 )
 
 app_name = "tasks"
@@ -23,7 +23,7 @@ urlpatterns = [
     ),
     path(
         "<int:task_id>/edit",
-        UTaskView.as_view(),
+        TaskUView.as_view(),
         name="edit_task",
     ),
     path(
