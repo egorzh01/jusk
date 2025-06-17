@@ -19,7 +19,7 @@ class ProjectAdmin(admin.ModelAdmin[Project]):
     filter = ("executor",)
     list_display = ["title", "created_at", "updated_at"]
     search_fields = ["title", "created_at", "updated_at"]
-    readonly_fields = ["created_at", "updated_at", "creator"]
+    readonly_fields = ["created_at", "updated_at", "owner"]
     list_filter = ["created_at", "updated_at"]
 
     fieldsets = (
@@ -31,7 +31,7 @@ class ProjectAdmin(admin.ModelAdmin[Project]):
                     "created_at",
                     "updated_at",
                     "description",
-                    "creator",
+                    "owner",
                 ),
             },
         ),
@@ -45,7 +45,7 @@ class ProjectAdmin(admin.ModelAdmin[Project]):
                 "fields": (
                     "title",
                     "description",
-                    "executor",
+                    "owner",
                 ),
             },
         ),
@@ -59,7 +59,7 @@ class ProjectAdmin(admin.ModelAdmin[Project]):
         change: bool,
     ) -> None:
         if not change:
-            obj.creator = cast(User, request.user)
+            obj.owner = cast(User, request.user)
 
         super().save_model(request, obj, form, change)
 

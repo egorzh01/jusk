@@ -11,8 +11,6 @@ from rest_framework.views import APIView
 
 from apps.projects.forms.project import (
     ProjectForm,
-    ProjectMemberFormSet,
-    ProjectStatusFormSet,
 )
 from apps.projects.models import Project, ProjectMember, ProjectStatus
 from apps.tasks.models import TaskTimeLog
@@ -62,18 +60,21 @@ class ProjectView(LoginRequiredMixin, TemplateView):
     template_name = "projects/project.html"
     extra_context = None
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        project = get_object_or_404(
+    def get_object(self) -> Project:
+        return get_object_or_404(
             Project.objects.filter(
-                members__user=cast(AuthenticatedHttpRequest, self.request).user
+                members__user=cast(AuthenticatedHttpRequest, self.request).user,
             ),
             id=self.kwargs["project_id"],
         )
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        project = self.get_object()
         context["project"] = project
         total_hours = (
             TaskTimeLog.objects.filter(task__project=project).aggregate(
-                models.Sum("hours")
+                models.Sum("hours"),
             )["hours__sum"]
             or 0
         )
@@ -86,23 +87,21 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
     template_name = "projects/edit_project.html"
     extra_context = None
 
+    def get_object(self) -> Project:
+        return get_object_or_404(
+            Project,
+            owner_id=cast(AuthenticatedHttpRequest, self.request).user.id,
+            id=self.kwargs["project_id"],
+        )
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         if not context.get("project"):
-            project = get_object_or_404(
-                Project.objects.filter(
-                    members__user=cast(AuthenticatedHttpRequest, self.request).user
-                ),
-                id=self.kwargs["project_id"],
-            )
+            project = self.get_object()
             context["project"] = project
         if not context.get("form"):
             form = ProjectForm(instance=context["project"])
-            status_formset = ProjectStatusFormSet(instance=context["project"])
-            member_formset = ProjectMemberFormSet(instance=context["project"])
             context["form"] = form
-            context["status_formset"] = status_formset
-            context["member_formset"] = member_formset
         return context
 
     def post(
@@ -111,28 +110,44 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
         *args: Any,
         **kwargs: Any,
     ) -> HttpResponse:
-        project = get_object_or_404(Project, id=kwargs["project_id"])
+        project = self.get_object()
         form = ProjectForm(request.POST, instance=project)
-        status_formset = ProjectStatusFormSet(request.POST, instance=project)
-        member_formset = ProjectMemberFormSet(request.POST, instance=project)
-
-        if (
-            not form.is_valid()
-            or not status_formset.is_valid()
-            or not member_formset.is_valid()
-        ):
-            print(form.errors, status_formset.errors, member_formset.errors)
+        if not form.is_valid():
             return self.get(
                 request,
                 *args,
                 **kwargs,
                 project=project,
                 form=form,
-                status_formset=status_formset,
-                member_formset=member_formset,
             )
+
+        status_names = request.POST.getlist("status_names[]")
+        member_ids = set(int(id_) for id_ in request.POST.getlist("member_ids[]"))
+        statuses_map = {name: i for i, name in enumerate(status_names)}
+        free_statuses: list[ProjectStatus] = []
         with transaction.atomic():
+            for status in project.statuses.all():
+                if status.name not in status_names:
+                    free_statuses.append(status)
+                else:
+                    status.position = statuses_map.pop(status.name)
+                    status.save()
+            for name, position in statuses_map.items():
+                if free_statuses:
+                    status = free_statuses.pop()
+                else:
+                    status = ProjectStatus(project=project)
+                status.name = name
+                status.position = position
+                status.save()
+            for status in free_statuses:
+                status.delete()
+
+            for member in project.members.all():
+                if member.user_id == project.owner_id:
+                    continue
+                if member.id not in member_ids:
+                    member.delete()
+
             form.save()
-            status_formset.save()
-            member_formset.save()
         return redirect("projects:project", project_id=project.id)

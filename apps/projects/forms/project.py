@@ -1,9 +1,6 @@
-from typing import Any
-
 from django import forms
-from django.forms import BaseInlineFormSet, inlineformset_factory
 
-from apps.projects.models import Project, ProjectMember, ProjectStatus
+from apps.projects.models import Project
 
 
 class ProjectForm(forms.ModelForm[Project]):
@@ -27,42 +24,3 @@ class ProjectForm(forms.ModelForm[Project]):
                 },
             ),
         }
-
-
-class BaseProjectFormSet(BaseInlineFormSet[Any, Any, Any]):
-    def add_fields(
-        self,
-        form: Any,
-        index: int | None,
-    ) -> None:
-        super().add_fields(form, index)
-        form.fields["DELETE"].widget = forms.HiddenInput()
-
-
-ProjectMemberFormSet: type[BaseInlineFormSet[ProjectMember, Project, Any]] = (
-    inlineformset_factory(
-        parent_model=Project,
-        model=ProjectMember,
-        fields=["user"],
-        extra=0,
-        can_delete=True,
-        formset=BaseProjectFormSet,
-        widgets={
-            "user": forms.Select(attrs={"class": "border rounded p-1 w-full"}),
-        },
-    )
-)
-
-ProjectStatusFormSet: type[BaseInlineFormSet[ProjectStatus, Project, Any]] = (
-    inlineformset_factory(
-        parent_model=Project,
-        model=ProjectStatus,
-        fields=["name", "position"],
-        extra=0,
-        can_delete=True,
-        formset=BaseProjectFormSet,
-        widgets={
-            "name": forms.TextInput(attrs={"class": "border rounded p-1 w-full"}),
-        },
-    )
-)

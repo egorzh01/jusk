@@ -18,10 +18,9 @@ class Project(models.Model):
         auto_now=True,
         editable=False,
     )
-    creator = models.ForeignKey(
+    owner = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
-        editable=False,
     )
 
     def __str__(self) -> str:
