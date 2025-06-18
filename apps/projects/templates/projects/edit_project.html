@@ -177,6 +177,28 @@
           </div>
         {% endfor %}
       </div>
+      <span class="form-label">Join requests</span>
+      <div class="flex flex-wrap gap-2" id="members-container">
+        {% for member in project.members.all %}
+          <div class="member-form border border-gray-300 py-2 rounded flex justify-between items-center"
+               x-data="{ deleted: false }"
+               :class="{ 'bg-gray-200 opacity-60': deleted }">
+            <span class="px-3">{{ member.user }}
+              {% if member.user_id == request.user.id %}(You){% endif %}
+            </span>
+            <template x-if="!deleted">
+              <input type="hidden" name="member_ids[]" value="{{ member.id }}">
+            </template>
+            {% if project.owner_id != member.user_id %}
+              <button @click="deleted = !deleted"
+                      type="button"
+                      class="font-bold px-3"
+                      :class="deleted ? 'text-green-500' : 'text-red-500'"
+                      x-text="deleted ? '+' : '-'"></button>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
       <!-- Submit -->
       <div class="flex flex-row gap-15">
         <button type="submit"

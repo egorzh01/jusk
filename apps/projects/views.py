@@ -114,10 +114,6 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
         **kwargs: Any,
     ) -> HttpResponse:
         project = self.get_object()
-        form = ProjectForm(request.POST, instance=project)
-
-        if not form.is_valid():
-            return self.get(request, *args, **kwargs, project=project, form=form)
 
         # Удаляем дубликаты по имени (сохраняем последнее вхождение)
         unique_statuses = {
@@ -151,6 +147,8 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
                 id__in=member_ids,
             ).delete()
 
+        form = ProjectForm(request.POST, instance=project)
+        if form.is_valid():
             form.save()
-
-        return redirect("projects:project", project_id=project.id)
+            return redirect("projects:project", project_id=project.id)
+        return self.get(request, *args, **kwargs, project=project, form=form)

@@ -84,3 +84,37 @@ class ProjectStatus(models.Model):
                 name="unique_project_name",
             ),
         ]
+
+
+class ProjectJoinRequest(models.Model):
+    project = models.ForeignKey(
+        "projects.Project",
+        on_delete=models.CASCADE,
+        editable=False,
+    )
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        editable=False,
+    )
+    message = models.TextField(
+        max_length=256,
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+    )
+
+    class Meta(TypedModelMeta):
+        db_table = "project_join_requests"
+        verbose_name = "project join request"
+        verbose_name_plural = "project join requests"
+        ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "user"],
+                name="unique_project_join_request",
+            ),
+        ]
