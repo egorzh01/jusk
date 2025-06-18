@@ -34,19 +34,26 @@
             <div>
                 <label class="block font-medium">Statuses</label>
                 <div class="w-fit min-w-40 pt-2 border-t border-gray-300 flex flex-wrap gap-2">
-                    {% for status in project.statuses.all %}
-                        <span class="border border-gray-300 p-2 rounded ">{{ status }}</span>
-                    {% endfor %}
+                    {% if project.statuses.all %}
+                        {% for status in project.statuses.all %}
+                            <span class="border border-gray-300 p-2 rounded ">{{ status }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="text-gray-500 italic">No statuses</span>
+                    {% endif %}
                 </div>
             </div>
             <div>
                 <label class="block font-medium">Members</label>
                 <div class="w-fit min-w-40 pt-2 border-t border-gray-300 flex flex-wrap gap-2">
                     {% for member in project.members.all %}
-                        <span class="border border-gray-300 p-2 rounded ">{{ member.user }}</span>
+                        <span class="border border-gray-300 p-2 rounded ">{{ member.user }}
+                            {% if member.user_id == request.user.id %}(You){% endif %}
+                        </span>
                     {% endfor %}
                 </div>
             </div>
+            {% include "projects/join_requests.html" %}
         </div>
     </div>
 {% endblock content %}

@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 
 from apps.users.models import User
 
-from .models import Project, ProjectMember, ProjectStatus
+from .models import Project, ProjectJoinRequest, ProjectMember, ProjectStatus
 
 
 @admin.register(Project)
@@ -118,6 +118,34 @@ class ProjectStatusAdmin(admin.ModelAdmin[ProjectStatus]):
             {
                 "classes": ("wide",),
                 "fields": ("name", "project", "position"),
+            },
+        ),
+    )
+
+
+@admin.register(ProjectJoinRequest)
+class ProjectJoinRequestAdmin(admin.ModelAdmin[ProjectJoinRequest]):
+    ordering = ["created_at"]
+    filter = ("project", "user")
+    list_display = ["project", "user", "created_at"]
+    search_fields = ["text"]
+    list_filter = ["user", "project"]
+
+    fieldsets = (
+        (
+            _("Info"),
+            {
+                "fields": ("text", "project", "user"),
+            },
+        ),
+    )
+
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("text", "project", "user"),
             },
         ),
     )

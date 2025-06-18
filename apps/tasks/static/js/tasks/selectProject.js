@@ -26,7 +26,7 @@ projectSelect.addEventListener("change", function () {
     return;
   }
   try {
-    fetch(`/api/projects/${projectId}/selects/`)
+    fetch(`/projects/api/${projectId}/selects/`)
       .then((res) => res.json())
       .then((data) => {
         statusSelect.disabled = false;

@@ -90,14 +90,13 @@ class ProjectJoinRequest(models.Model):
     project = models.ForeignKey(
         "projects.Project",
         on_delete=models.CASCADE,
-        editable=False,
+        related_name="join_requests",
     )
     user = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
-        editable=False,
     )
-    message = models.TextField(
+    text = models.TextField(
         max_length=256,
         blank=True,
         null=True,
