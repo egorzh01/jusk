@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-  <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
+  <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea"
+       x-data="{ anyStatusDeleted: 0 }">
     <h1 class="page-title mb-6">Edit project #{{ project.id }}</h1>
     <form method="post" class="space-y-5 text-sm mb-6">
       {% csrf_token %}
@@ -15,42 +16,120 @@
         {% include "form_errors.html" with errors=form.description.errors %}
       </div>
       <!-- Statuses -->
-      <label class="form-label">Statuses</label>
-      <div id="statuses-container" class="space-y-3 mb-4">
-        {% for status in project.statuses.all %}
-          <div class="status-item flex items-center gap-2">
-            <input type="text"
-                   name="status_names[]"
-                   value="{{ status.name }}"
-                   placeholder="Status name"
-                   class="form-input border rounded p-1 w-1/3"
-                   required>
-            <button type="button"
-                    onclick="this.parentElement.remove()"
-                    class="text-red-500">-</button>
-          </div>
-        {% endfor %}
+      <span class="form-label">Statuses</span>
+      <span x-cloak x-show="anyStatusDeleted" class="flex text-red-400 mb-2">
+        You have selected existing statuses for deletion.
+        <br />
+        They will be removed, and tasks with these statuses will lose their status.
+      </span>
+      <div class="w-fit">
+        <div id="statuses-container" class="space-y-3 mb-4">
+          {% for status in project.statuses.all %}
+            <div class="status-form border border-gray-300 rounded flex justify-between items-center"
+                 x-data="{ deleted: false, name: '{{ status.name }}' }"
+                 :class="{ 'bg-gray-200 opacity-60': deleted }">
+              <div class="flex px-1">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="size-4"
+                     onclick="moveUp(this.parentElement)">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75 12 3m0 0 3.75 3.75M12 3v18" />
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="size-4"
+                     onclick="moveDown(this.parentElement)">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+                </svg>
+              </div>
+              <template x-if="!deleted">
+                <div>
+                  <input type="hidden" name="status_ids[]" value="{{ status.id }}">
+                  <input type="text"
+                         name="status_names[]"
+                         class="p-2 w-68"
+                         required
+                         x-model="name"
+                         maxlength="32">
+                </div>
+              </template>
+              <template x-if="deleted">
+                <span class="p-2 w-68" x-text="name"></span>
+              </template>
+              <button @click="deleted = !deleted; anyStatusDeleted += deleted ? -1 : 1"
+                      type="button"
+                      class="font-bold px-3"
+                      :class="deleted ? 'text-green-500' : 'text-red-500'"
+                      x-text="deleted ? '+' : '-'"></button>
+            </div>
+          {% endfor %}
+        </div>
+        <!-- Кнопка добавления -->
+        <div onclick="addStatus()"
+             class="min-w-80 border border-gray-300 rounded flex justify-center items-center cursor-pointer">
+          <span class="font-bold p-2 text-blue-600">+</span>
+        </div>
       </div>
-      <!-- Кнопка добавления -->
-      <button type="button"
-              onclick="addStatus()"
-              class="text-sm text-blue-600 mt-2">+ Add status</button>
       <!-- Шаблон -->
       <template id="status-template">
-        <div class="status-item flex items-center gap-2">
+        <div class="w-fit border border-gray-300 rounded flex justify-between items-center">
+          <div class="flex px-1">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke-width="1.5"
+                 stroke="currentColor"
+                 class="size-4"
+                 onclick="moveUp(this.parentElement)">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75 12 3m0 0 3.75 3.75M12 3v18" />
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke-width="1.5"
+                 stroke="currentColor"
+                 class="size-4"
+                 onclick="moveDown(this.parentElement)">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
+            </svg>
+          </div>
+          <input type="hidden" name="status_ids[]" value="">
           <input type="text"
                  name="status_names[]"
-                 placeholder="Status name"
-                 class="form-input border rounded p-1 w-1/3"
-                 required>
+                 value="{{ status.name }}"
+                 class="p-2 min-w-68"
+                 required
+                 maxlength="32">
           <button type="button"
-                  onclick="this.parentElement.remove()"
-                  class="text-red-500">-</button>
+                  class="text-red-500 font-bold px-3"
+                  onclick="this.parentElement.remove()">-</button>
         </div>
       </template>
       <script>
+        function moveUp(button) {
+          const parent = button.parentElement;
+          const prev = parent.previousElementSibling;
+          if (prev) {
+            parent.parentElement.insertBefore(parent, prev);
+          }
+        }
+
+        function moveDown(button) {
+          const parent = button.parentElement;
+          const next = parent.nextElementSibling;
+          if (next) {
+            parent.parentElement.insertBefore(next, parent);
+          }
+        }
+        const tpl = document.getElementById("status-template");
+
         function addStatus() {
-          const tpl = document.getElementById("status-template");
           const clone = tpl.content.cloneNode(true);
           document.getElementById("statuses-container").appendChild(clone);
         }
@@ -76,54 +155,28 @@
         </div>
       </div>
       <!-- Members -->
-      <label class="form-label">Members</label>
+      <span class="form-label">Members</span>
       <div class="flex flex-wrap gap-2" id="members-container">
         {% for member in project.members.all %}
           <div class="member-form border border-gray-300 py-2 rounded flex justify-between items-center"
-               data-id="{{ member.id }}">
-            <span class="block px-3">{{ member.user }}
+               x-data="{ deleted: false }"
+               :class="{ 'bg-gray-200 opacity-60': deleted }">
+            <span class="px-3">{{ member.user }}
               {% if member.user_id == request.user.id %}(You){% endif %}
             </span>
-            <input type="hidden" name="member_ids[]" value="{{ member.id }}">
+            <template x-if="!deleted">
+              <input type="hidden" name="member_ids[]" value="{{ member.id }}">
+            </template>
             {% if project.owner_id != member.user_id %}
-              <button type="button"
-                      class="remove-btn text-red-500 font-bold px-3"
-                      onclick="toggleMemberDelete(this)">-</button>
+              <button @click="deleted = !deleted"
+                      type="button"
+                      class="font-bold px-3"
+                      :class="deleted ? 'text-green-500' : 'text-red-500'"
+                      x-text="deleted ? '+' : '-'"></button>
             {% endif %}
           </div>
         {% endfor %}
       </div>
-      <script>
-        function toggleMemberDelete(button) {
-          const wrapper = button.closest(".member-form");
-          const isDeleted = wrapper.dataset.deleted === "true";
-
-          if (isDeleted) {
-            wrapper.dataset.deleted = "false";
-            wrapper.classList.remove("bg-gray-200", "opacity-60");
-            button.textContent = "-";
-            button.classList.remove("text-green-500");
-            button.classList.add("text-red-500");
-
-            const newInput = document.createElement("input");
-            newInput.type = "hidden";
-            newInput.name = "member_ids[]";
-            newInput.value = memberId;
-            wrapper.appendChild(newInput);
-          } else {
-            wrapper.dataset.deleted = "true";
-            wrapper.classList.add("bg-gray-200", "opacity-60");
-            button.textContent = "+";
-            button.classList.remove("text-red-500");
-            button.classList.add("text-green-500");
-
-            const hiddenInput = wrapper.querySelector(`input[type="hidden"][name="member_ids[]"]`);
-            if (hiddenInput) {
-              hiddenInput.remove();
-            }
-          }
-        }
-      </script>
       <!-- Submit -->
       <div class="flex flex-row gap-15">
         <button type="submit"

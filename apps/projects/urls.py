@@ -7,7 +7,7 @@ app_name = "projects"
 
 urlpatterns = [
     path(
-        "<int:project_id>/selects/",
+        "api/<int:project_id>/selects/",
         ProjectSelectsAPIView.as_view(),
         name="project_members",
     ),

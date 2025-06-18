@@ -24,6 +24,6 @@ urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("admin/", admin.site.urls),
     path("tasks/", include("apps.tasks.urls", namespace="tasks")),
-    path("api/projects/", include("apps.projects.urls", namespace="projects")),
+    path("projects/", include("apps.projects.urls", namespace="projects")),
     path("__reload__/", include("django_browser_reload.urls")),
 ]

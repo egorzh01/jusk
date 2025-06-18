@@ -83,8 +83,4 @@ class ProjectStatus(models.Model):
                 fields=["project", "name"],
                 name="unique_project_name",
             ),
-            models.UniqueConstraint(
-                fields=["project", "position"],
-                name="unique_project_position",
-            ),
         ]

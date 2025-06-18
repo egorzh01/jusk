@@ -1,6 +1,7 @@
 from typing import Any, cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -88,11 +89,13 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
     extra_context = None
 
     def get_object(self) -> Project:
-        return get_object_or_404(
+        project = get_object_or_404(
             Project,
-            owner_id=cast(AuthenticatedHttpRequest, self.request).user.id,
             id=self.kwargs["project_id"],
         )
+        if project.owner_id != self.request.user.id:
+            raise PermissionDenied
+        return project
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -112,42 +115,42 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
     ) -> HttpResponse:
         project = self.get_object()
         form = ProjectForm(request.POST, instance=project)
+
         if not form.is_valid():
-            return self.get(
-                request,
-                *args,
-                **kwargs,
-                project=project,
-                form=form,
+            return self.get(request, *args, **kwargs, project=project, form=form)
+
+        # Удаляем дубликаты по имени (сохраняем последнее вхождение)
+        unique_statuses = {
+            name[:32]: int(id_) if id_ else -1
+            for id_, name in zip(
+                request.POST.getlist("status_ids[]"),
+                request.POST.getlist("status_names[]"),
+                strict=True,
             )
+        }
+        existing_statuses = {s.id: s for s in project.statuses.all()}
+        member_ids = {int(id_) for id_ in request.POST.getlist("member_ids[]")}
 
-        status_names = request.POST.getlist("status_names[]")
-        member_ids = set(int(id_) for id_ in request.POST.getlist("member_ids[]"))
-        statuses_map = {name: i for i, name in enumerate(status_names)}
-        free_statuses: list[ProjectStatus] = []
         with transaction.atomic():
-            for status in project.statuses.all():
-                if status.name not in status_names:
-                    free_statuses.append(status)
-                else:
-                    status.position = statuses_map.pop(status.name)
+            # Обновление/создание статусов
+            for position, (name, status_id) in enumerate(unique_statuses.items()):
+                if status := existing_statuses.pop(status_id, None):
+                    status.name = name
+                    status.position = position
                     status.save()
-            for name, position in statuses_map.items():
-                if free_statuses:
-                    status = free_statuses.pop()
                 else:
-                    status = ProjectStatus(project=project)
-                status.name = name
-                status.position = position
-                status.save()
-            for status in free_statuses:
-                status.delete()
+                    ProjectStatus.objects.create(
+                        project=project,
+                        name=name,
+                        position=position,
+                    )
 
-            for member in project.members.all():
-                if member.user_id == project.owner_id:
-                    continue
-                if member.id not in member_ids:
-                    member.delete()
+            ProjectStatus.objects.filter(id__in=existing_statuses.keys()).delete()
+
+            project.members.exclude(user_id=project.owner_id).exclude(
+                id__in=member_ids,
+            ).delete()
 
             form.save()
+
         return redirect("projects:project", project_id=project.id)
