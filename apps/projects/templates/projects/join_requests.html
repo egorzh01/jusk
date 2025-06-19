@@ -1,77 +1,93 @@
 <div x-data="{ tab: 'join-requests' }" class="w-full text-sm">
-    <!-- Вкладки -->
-    <div class="flex border-b border-gray-300">
-        <button type="button"
-                @click="tab = 'join-requests'"
-                :class="tab === 'join-requests' && 'active'"
-                class="c-tl-h-button">Join requests</button>
-    </div>
-    <!-- Содержимое карточки -->
-    <div class="rounded-b p-4 bg-white">
-        <!-- JoinRequests -->
-        <div id="join-requests"
-             x-show="tab === 'join-requests'"
-             class="с-tl-h-container">
-            {% for join_request in project.join_requests.all %}
-                <div id="join-request-{{ join_request.id }}"
-                     x-data="joinRequestComponent({{ join_request.id }}, 'haha')"
-                     class="с-tl-h-entry">
-                    <div class="c-tl-h-header">
-                        <span>#{{ join_request.id }}, {{ join_request.user }}, {{ join_request.created_at|date:"Y-m-d H:i" }}</span>
-                        {% if project.owner == request.user %}
-                            <button type="button"
-                                    @click="accept = !accept; reject = false"
-                                    class="hover:text-green-500 pb-1 ml-2">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                     fill="none"
-                                     viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor"
-                                     class="size-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                </svg>
-                            </button>
-                            <button type="button"
-                                    @click="reject = !reject; accept = false"
-                                    class="hover:text-red-400 pb-1">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                     fill="none"
-                                     viewBox="0 0 24 24"
-                                     stroke-width="1.5"
-                                     stroke="currentColor"
-                                     class="size-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        {% endif %}
-                    </div>
-                    <span>{{ join_request.text }}</span>
-                    <div x-show="accept" x-cloak class="text-sm mt-2 text-gray-400">
-                        <span>Are you sure you want to accept this join request?</span>
-                        <button type="button"
-                                @click="acceptJoinRequest"
-                                class="ml-2 underline text-gray-400 hover:text-gray-600">Save</button>
-                        <button type="button"
-                                @click="accept = false"
-                                class="ml-3 underline text-gray-400 hover:text-gray-600">Cancel</button>
-                    </div>
-                    <div x-show="reject" x-cloak class="text-sm mt-2 text-gray-400">
-                        <span class="text-red-400">Are you sure you want to reject this join request?</span>
-                        <button type="button"
-                                @click="rejectJoinRequest"
-                                class="ml-2 underline hover:text-red-400">Yes</button>
-                        <button type="button"
-                                @click="reject = false"
-                                class="ml-2 underline hover:text-gray-600">Cancel</button>
-                    </div>
-                </div>
-            {% endfor %}
+  <!-- Вкладки -->
+  <div class="flex border-b border-gray-300">
+    <button type="button"
+            @click="tab = 'join-requests'"
+            :class="tab === 'join-requests' && 'active'"
+            class="c-tl-h-button">Join requests</button>
+  </div>
+  <!-- Содержимое карточки -->
+  <div class="rounded-b p-4 bg-white">
+    <!-- JoinRequests -->
+    <div id="join-requests"
+         x-show="tab === 'join-requests'"
+         class="с-tl-h-container">
+      {% for join_request in project.join_requests.all %}
+        <div id="join-request-{{ join_request.id }}"
+             x-data="joinRequestComponent({{ join_request.id }}, '{% url "projects:join_request_detail" project_id=project.id join_request_id=join_request.id %}')"
+             class="с-tl-h-entry">
+          <div class="c-tl-h-header">
+            <span>#{{ join_request.id }}, {{ join_request.user }}, {{ join_request.created_at|date:"Y-m-d H:i" }}</span>
+            {% if project.owner == request.user %}
+              <button type="button"
+                      @click="accept = !accept; reject = false"
+                      class="hover:text-green-500 pb-1 ml-2">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="size-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              </button>
+              <button type="button"
+                      @click="reject = !reject; accept = false"
+                      class="hover:text-red-400 pb-1">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="size-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            {% endif %}
+          </div>
+          {% if join_request.text %}
+            <span>{{ join_request.text }}</span>
+          {% else %}
+            <span class="с-tl-h-no-entries">No message</span>
+          {% endif %}
+          <div x-show="accept" x-cloak class="text-sm mt-2 text-gray-400">
+            <span>Are you sure you want to accept this join request?</span>
+            <button type="button"
+                    @click="acceptJoinRequest"
+                    class="ml-2 underline text-gray-400 hover:text-gray-600">Save</button>
+            <button type="button"
+                    @click="accept = false"
+                    class="ml-3 underline text-gray-400 hover:text-gray-600">Cancel</button>
+          </div>
+          <div x-show="reject" x-cloak class="text-sm mt-2 text-gray-400">
+            <span class="text-red-400">Are you sure you want to reject this join request?</span>
+            <button type="button"
+                    @click="rejectJoinRequest"
+                    class="ml-2 underline hover:text-red-400">Yes</button>
+            <button type="button"
+                    @click="reject = false"
+                    class="ml-2 underline hover:text-gray-600">Cancel</button>
+          </div>
         </div>
+      {% endfor %}
     </div>
+  </div>
 </div>
 <script>
   const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
   const joinRequests = document.getElementById("join-requests");
+  const template = document.getElementById("member-template");
+  const container = document.getElementById("members-container");
+
+  function addMember(memberId, username) {
+    if (!template || !container) {
+      return;
+    }
+    const clone = template.content.cloneNode(true);
+    element = clone.firstElementChild;
+    element.setAttribute("x-data", `{ deleted: false, memberId: ${memberId}, username: '${username}' }`);
+    container.appendChild(element);
+  }
 
   function checkEmptyJoinRequests() {
     if (joinRequests.children.length == 0) {
@@ -79,7 +95,7 @@
     }
   }
 
-  function joinRequestComponent(commentId, apiUrl) {
+  function joinRequestComponent(joinRequestId, apiUrl) {
     return {
       accept: false,
       reject: false,
@@ -91,17 +107,15 @@
             "Content-Type": "application/json",
             "X-CSRFToken": csrfToken,
           },
-          body: JSON.stringify({
-            text: this.editedText
-          }),
         });
 
         if (response.ok) {
           const data = await response.json();
           console.log(data);
-          this.originalText = this.editedText = data.comment.text;
-          this.edit = false;
-          if (data.history_entry) addHistoryEntry(data.history_entry.text, data.history_entry.user, data.history_entry.created_at);
+          document.getElementById(`join-request-${joinRequestId}`).remove();
+          checkEmptyJoinRequests();
+          addMember(data.member.id, data.member.name);
+          this.accept = false;
         } else {
           alert("Ошибка при обновлении комментария.");
         }
@@ -116,10 +130,8 @@
         });
 
         if (response.ok) {
-          document.getElementById(`comment-${commentId}`).remove();
+          document.getElementById(`join-request-${joinRequestId}`).remove();
           checkEmptyJoinRequests();
-          const data = await response.json();
-          if (data.history_entry) addHistoryEntry(data.history_entry.text, data.history_entry.user, data.history_entry.created_at);
         } else {
           alert("Ошибка при удалении.");
         }

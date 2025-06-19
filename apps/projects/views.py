@@ -13,7 +13,12 @@ from rest_framework.views import APIView
 from apps.projects.forms.project import (
     ProjectForm,
 )
-from apps.projects.models import Project, ProjectMember, ProjectStatus
+from apps.projects.models import (
+    Project,
+    ProjectJoinRequest,
+    ProjectMember,
+    ProjectStatus,
+)
 from apps.tasks.models import TaskTimeLog
 from config.typess import AuthenticatedHttpRequest, AuthenticatedRequest
 
@@ -152,3 +157,55 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
             form.save()
             return redirect("projects:project", project_id=project.id)
         return self.get(request, *args, **kwargs, project=project, form=form)
+
+
+class ProjectJoinRequestAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["patch", "delete"]
+
+    def get_object(self) -> ProjectJoinRequest:
+        pjr = get_object_or_404(
+            ProjectJoinRequest,
+            id=self.kwargs["join_request_id"],
+            project_id=self.kwargs["project_id"],
+        )
+        if pjr.project.owner_id != self.request.user.id:
+            raise PermissionDenied
+        return pjr
+
+    def patch(
+        self,
+        request: AuthenticatedRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Response:
+        pjr = self.get_object()
+        member = ProjectMember.objects.filter(
+            project=pjr.project,
+            user=pjr.user,
+        ).first()
+        with transaction.atomic():
+            if not member:
+                ProjectMember.objects.create(
+                    project=pjr.project,
+                    user=pjr.user,
+                )
+            pjr.delete()
+        return Response(
+            data={
+                "member": {
+                    "id": pjr.user.id,
+                    "name": str(pjr.user),
+                },
+            },
+        )
+
+    def delete(
+        self,
+        request: AuthenticatedRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Response:
+        pjr = self.get_object()
+        pjr.delete()
+        return Response(status=204)

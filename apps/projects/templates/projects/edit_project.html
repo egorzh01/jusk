@@ -179,6 +179,21 @@
           </div>
         {% endfor %}
       </div>
+      <template id="member-template">
+        <div class="member-form border border-gray-300 py-2 rounded flex justify-between items-center"
+             x-data="{ deleted: false }"
+             :class="{ 'bg-gray-200 opacity-60': deleted }">
+          <span class="px-3" x-text="username"></span>
+          <template x-if="!deleted">
+            <input type="hidden" name="member_ids[]" :value="memberId">
+          </template>
+          <button @click="deleted = !deleted"
+                  type="button"
+                  class="font-bold px-3"
+                  :class="deleted ? 'text-green-500' : 'text-red-500'"
+                  x-text="deleted ? '+' : '-'"></button>
+        </div>
+      </template>
       <!-- Submit -->
       <div class="flex flex-row gap-15">
         <button type="submit"
