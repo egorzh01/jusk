@@ -1,5 +1,7 @@
 {
     "mypy-type-checker.importStrategy": "fromEnvironment",
     "ruff.importStrategy": "fromEnvironment",
-    "tailwindCSS.experimental.configFile": "theme/static_src/src/style.css"
+    "tailwindCSS.experimental.configFile": "theme/static_src/src/style.css",
+    "prettier.configPath": "theme/static_src/.prettierrc",
+    "prettier.prettierPath": "theme/static_src/node_modules/prettier"
 }

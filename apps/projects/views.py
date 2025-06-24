@@ -5,6 +5,8 @@ from django.core.exceptions import PermissionDenied
 from django.db import models, transaction
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.views import View
 from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework.response import Response
@@ -23,42 +25,41 @@ from apps.tasks.models import TaskTimeLog
 from config.typess import AuthenticatedHttpRequest, AuthenticatedRequest
 
 
-class ProjectSelectsAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+class ProjectSelectionView(LoginRequiredMixin, TemplateView):
+    http_method_names = ["get"]
+    template_name = "projects/project_selection.html"
+    extra_context = None
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        ctx = super().get_context_data(**kwargs)
+        ctx["projects"] = Project.objects.filter(
+            members__user=cast(AuthenticatedHttpRequest, self.request).user
+        )
+        return ctx
+
+
+class ProjectSelectionRedirectView(LoginRequiredMixin, View):
     http_method_names = ["get"]
 
     def get(
         self,
-        request: AuthenticatedRequest,
-        project_id: int,
-    ) -> Response:
-        get_object_or_404(
-            ProjectMember,
-            project_id=project_id,
-            user=request.user,
+        request: AuthenticatedHttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponse:
+        project_id = kwargs["project_id"]
+        project = get_object_or_404(
+            Project.objects.filter(
+                members__user=cast(AuthenticatedHttpRequest, self.request).user
+            ),
+            id=project_id,
         )
-        members = ProjectMember.objects.filter(project_id=project_id).select_related(
-            "user",
-        )
-        statuses = ProjectStatus.objects.filter(project_id=project_id)
-        return Response(
-            data={
-                "members": [
-                    {
-                        "id": member.user.id,
-                        "name": str(member.user),
-                    }
-                    for member in members
-                ],
-                "statuses": [
-                    {
-                        "id": status.id,
-                        "name": str(status),
-                    }
-                    for status in statuses
-                ],
-            },
-        )
+
+        if next_url_name := request.GET.get("next"):
+            url = reverse(next_url_name, kwargs={"project_id": project.id})
+            return redirect(url)
+
+        return redirect("projects:project", project_id=project.id)
 
 
 class ProjectView(LoginRequiredMixin, TemplateView):
@@ -120,7 +121,6 @@ class ProjectUView(LoginRequiredMixin, TemplateView):
     ) -> HttpResponse:
         project = self.get_object()
 
-        # Удаляем дубликаты по имени (сохраняем последнее вхождение)
         unique_statuses = {
             name[:32]: int(id_) if id_ else -1
             for id_, name in zip(
@@ -184,12 +184,14 @@ class ProjectJoinRequestAPIView(APIView):
             project=pjr.project,
             user=pjr.user,
         ).first()
+        if member:
+            pjr.delete()
+            return Response()
         with transaction.atomic():
-            if not member:
-                ProjectMember.objects.create(
-                    project=pjr.project,
-                    user=pjr.user,
-                )
+            ProjectMember.objects.create(
+                project=pjr.project,
+                user=pjr.user,
+            )
             pjr.delete()
         return Response(
             data={

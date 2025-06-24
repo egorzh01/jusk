@@ -3,7 +3,7 @@ from django.urls import path
 
 from apps.projects.views import (
     ProjectJoinRequestAPIView,
-    ProjectSelectsAPIView,
+    ProjectSelectionRedirectView,
     ProjectUView,
     ProjectView,
 )
@@ -12,9 +12,14 @@ app_name = "projects"
 
 urlpatterns = [
     path(
-        "api/<int:project_id>/selects/",
-        ProjectSelectsAPIView.as_view(),
-        name="project_selects",
+        "select",
+        ProjectUView.as_view(),
+        name="new_project",
+    ),
+    path(
+        "select/<int:project_id>/redirect/",
+        ProjectSelectionRedirectView.as_view(),
+        name="project_selection_redirect",
     ),
     path(
         "<int:project_id>",

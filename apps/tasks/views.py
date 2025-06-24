@@ -58,15 +58,14 @@ class CTaskView(LoginRequiredMixin, TemplateView):
     ) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         if not context.get("form"):
+            context["project"] = get_object_or_404(
+                Project.objects.filter(members__user=cast(User, self.request.user)),
+                id=self.kwargs["project_id"],
+            )
             form = CTaskForm()
             executor_field = cast(forms.ModelChoiceField[User], form.fields["executor"])
-            executor_field.queryset = User.objects.none()
-            project_field = cast(
-                forms.ModelChoiceField[Project],
-                form.fields["project"],
-            )
-            project_field.queryset = Project.objects.filter(
-                members__user=cast(User, self.request.user),
+            executor_field.queryset = User.objects.filter(
+                projects__project=context["project"],
             )
             context["form"] = form
         return context
@@ -142,7 +141,9 @@ class TaskUView(LoginRequiredMixin, TemplateView):
         if not context.get("form"):
             form = UTaskForm(instance=context["task"])
             executor_field = cast(forms.ModelChoiceField[User], form.fields["executor"])
-            executor_field.queryset = User.objects.filter(project=task.project)
+            executor_field.queryset = User.objects.filter(
+                projects__project=task.project
+            )
             project_field = cast(
                 forms.ModelChoiceField[Project], form.fields["project"]
             )

@@ -114,7 +114,7 @@
           console.log(data);
           document.getElementById(`join-request-${joinRequestId}`).remove();
           checkEmptyJoinRequests();
-          addMember(data.member.id, data.member.name);
+          if (data.member) addMember(data.member.id, data.member.name);
           this.accept = false;
         } else {
           alert("Ошибка при обновлении комментария.");

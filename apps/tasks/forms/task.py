@@ -8,7 +8,7 @@ from ..models import Task
 class CTaskForm(forms.ModelForm[Task]):
     class Meta:
         model = Task
-        fields = ["title", "description", "status", "executor", "project"]
+        fields = ["title", "description", "status", "executor"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -23,12 +23,6 @@ class CTaskForm(forms.ModelForm[Task]):
                     "class": "w-2/3 resize rounded border border-gray-300 p-1",
                     "placeholder": "Enter description",
                     "rows": 12,
-                },
-            ),
-            "project": forms.Select(
-                attrs={
-                    "id": "project",
-                    "class": "rounded border border-gray-300 p-1",
                 },
             ),
             "executor": forms.Select(
@@ -87,7 +81,7 @@ class UTaskForm(forms.ModelForm[Task]):
 
     class Meta:
         model = Task
-        fields = ["title", "description", "status", "executor", "project"]
+        fields = ["title", "description", "status", "executor"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -102,12 +96,6 @@ class UTaskForm(forms.ModelForm[Task]):
                     "class": "w-2/3 resize rounded border border-gray-300 p-1",
                     "placeholder": "Enter description",
                     "rows": 12,
-                },
-            ),
-            "project": forms.Select(
-                attrs={
-                    "id": "project",
-                    "class": "rounded border border-gray-300 p-1",
                 },
             ),
             "executor": forms.Select(

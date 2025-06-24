@@ -12,7 +12,7 @@ app_name = "tasks"
 
 urlpatterns = [
     path(
-        "new",
+        "projects/<int:project_id>/tasks/new",
         CTaskView.as_view(),
         name="new_task",
     ),
