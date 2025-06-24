@@ -4,6 +4,7 @@ from django.urls import path
 from apps.projects.views import (
     ProjectJoinRequestAPIView,
     ProjectSelectionRedirectView,
+    ProjectSelectionView,
     ProjectUView,
     ProjectView,
 )
@@ -13,8 +14,8 @@ app_name = "projects"
 urlpatterns = [
     path(
         "select",
-        ProjectUView.as_view(),
-        name="new_project",
+        ProjectSelectionView.as_view(),
+        name="selection",
     ),
     path(
         "select/<int:project_id>/redirect/",

@@ -3,12 +3,11 @@
     {% load static %}
     <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
         <h1 class="page-title mb-6">Choose project</h1>
-        {% for project in projects %}
-            <div>
-                <a href="{% url 'projects:project_selection_redirect' project_id=project.id %}?next={{ request.GET.next|urlencode }}">
-                    {{ project.title }}
-                </a>
-            </div>
-        {% endfor %}
+        <div class="pt-2 flex flex-wrap gap-2">
+            {% for project in projects %}
+                <a href="{% url 'projects:project_selection_redirect' project_id=project.id %}?next={{ request.GET.next|urlencode }}"
+                   class="border border-gray-300 p-2 rounded hover:bg-gray-300">{{ project.title }}</a>
+            {% endfor %}
+        </div>
     </div>
 {% endblock content %}

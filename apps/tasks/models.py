@@ -49,7 +49,6 @@ class Task(WithCreatedAtAndUpdatedAt):
         "projects.Project",
         on_delete=models.CASCADE,
         related_name="tasks",
-        editable=False,
     )
     parent = models.ForeignKey(
         "self",

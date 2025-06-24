@@ -1,7 +1,7 @@
 <div class="sidebar-container">
   <div class="sidebar-block">
     <a class="sidebar-item{% if request.resolver_match.view_name == 'tasks:new_task' %} active{% endif %}"
-       href="{% url 'tasks:new_task' %}">
+       href="{% url 'projects:selection' %}?next=tasks:new_task">
       {% include "icons/plus.html" %}
       <span>Create task</span></a>
   </div>

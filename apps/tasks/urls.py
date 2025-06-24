@@ -17,22 +17,22 @@ urlpatterns = [
         name="new_task",
     ),
     path(
-        "<int:task_id>",
+        "tasks/<int:task_id>",
         TaskView.as_view(),
         name="task",
     ),
     path(
-        "<int:task_id>/edit",
+        "tasks/<int:task_id>/edit",
         TaskUView.as_view(),
         name="edit_task",
     ),
     path(
-        "<int:task_id>/timelogs/<int:timelog_id>/",
+        "tasks/<int:task_id>/timelogs/<int:timelog_id>/",
         TaskTimeLogAPIView.as_view(),
         name="timelog_detail",
     ),
     path(
-        "<int:task_id>/comments/<int:comment_id>/",
+        "tasks/<int:task_id>/comments/<int:comment_id>/",
         TaskCommentAPIView.as_view(),
         name="comment_detail",
     ),

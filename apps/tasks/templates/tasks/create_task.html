@@ -3,16 +3,19 @@
   {% load static %}
   <div class="flex flex-col w-full overflow-y-auto p-6 scrollarea">
     <h1 class="page-title mb-6">Create new task</h1>
-    <div>Project: Project name!!!!</div>
     <form method="post" class="space-y-5 text-sm">
       {% csrf_token %}
       <div class="flex flex-row gap-10">
-        <div id="status-container" class="text-gray-400" title="Select project">
+        <div>
+          <label class="block mb-1 font-medium">Project</label>
+          <p class="rounded border border-gray-300 p-1">{{ project.title }}</p>
+        </div>
+        <div>
           <label for="{{ form.status.id_for_label }}" class="block mb-1 font-medium">{{ form.status.label }}</label>
           {{ form.status }}
           {% include "form_errors.html" with errors=form.status.errors %}
         </div>
-        <div id="executor-container" class="text-gray-400" title="Select project">
+        <div>
           <label for="{{ form.executor.id_for_label }}" class="block mb-1 font-medium">{{ form.executor.label }}</label>
           {{ form.executor }}
           {% include "form_errors.html" with errors=form.executor.errors %}

@@ -29,14 +29,12 @@ class CTaskForm(forms.ModelForm[Task]):
                 attrs={
                     "id": "executor",
                     "class": "rounded border border-gray-300 p-1",
-                    "disabled": True,
                 },
             ),
             "status": forms.Select(
                 attrs={
                     "id": "status",
                     "class": "rounded border border-gray-300 p-1",
-                    "disabled": True,
                 },
             ),
         }

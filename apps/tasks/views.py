@@ -39,10 +39,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
     ) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["tasks"] = Task.objects.filter(
-            executor=cast(User, self.request.user)
+            executor=cast(User, self.request.user),
         ).only("id", "title", "status", "updated_at")
         context["projects"] = Project.objects.filter(
-            members__user=cast(User, self.request.user)
+            members__user=cast(User, self.request.user),
         ).only("id", "title")
         return context
 
@@ -52,21 +52,35 @@ class CTaskView(LoginRequiredMixin, TemplateView):
     template_name = "tasks/create_task.html"
     extra_context = None
 
+    def get_project(self) -> Project:
+        return get_object_or_404(
+            Project.objects.filter(members__user=cast(User, self.request.user)),
+            id=self.kwargs["project_id"],
+        )
+
     def get_context_data(
         self,
         **kwargs: Any,
     ) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        if not context.get("project"):
+            context["project"] = self.get_project()
         if not context.get("form"):
-            context["project"] = get_object_or_404(
-                Project.objects.filter(members__user=cast(User, self.request.user)),
-                id=self.kwargs["project_id"],
-            )
             form = CTaskForm()
             executor_field = cast(forms.ModelChoiceField[User], form.fields["executor"])
             executor_field.queryset = User.objects.filter(
                 projects__project=context["project"],
             )
+            status_field = cast(
+                forms.ModelChoiceField[ProjectStatus], form.fields["status"],
+            )
+            status_field.queryset = ProjectStatus.objects.filter(
+                project=context["project"],
+            )
+            if not status_field.queryset.exists():
+                status_field.empty_label = "No status"
+            else:
+                status_field.empty_label = None
             context["form"] = form
         return context
 
@@ -80,6 +94,7 @@ class CTaskView(LoginRequiredMixin, TemplateView):
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
         form.instance.creator = request.user
+        form.instance.project = self.get_project()
         TaskChecker.check_all(
             status_id=form.instance.status_id,
             project=form.instance.project,
@@ -106,7 +121,7 @@ class TaskView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         task = get_object_or_404(
             Task.objects.filter(
-                project__members__user=cast(AuthenticatedHttpRequest, self.request).user
+                project__members__user=cast(AuthenticatedHttpRequest, self.request).user,
             ),
             id=self.kwargs["task_id"],
         )
@@ -126,38 +141,32 @@ class TaskUView(LoginRequiredMixin, TemplateView):
     template_name = "tasks/edit_task.html"
     extra_context = None
 
+    def get_task(self) -> Task:
+        return get_object_or_404(
+            Task.objects.filter(project__members__user=cast(User, self.request.user)),
+            id=self.kwargs["task_id"],
+        )
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         if not context.get("task"):
-            task = get_object_or_404(
-                Task.objects.filter(
-                    project__members__user=cast(
-                        AuthenticatedHttpRequest, self.request
-                    ).user
-                ),
-                id=self.kwargs["task_id"],
-            )
-            context["task"] = task
+            context["task"] = self.get_task()
         if not context.get("form"):
             form = UTaskForm(instance=context["task"])
             executor_field = cast(forms.ModelChoiceField[User], form.fields["executor"])
             executor_field.queryset = User.objects.filter(
-                projects__project=task.project
-            )
-            project_field = cast(
-                forms.ModelChoiceField[Project], form.fields["project"]
-            )
-            project_field.queryset = Project.objects.filter(
-                members__user=cast(User, self.request.user),
+                projects__project=context["task"].project,
             )
             status_field = cast(
-                forms.ModelChoiceField[ProjectStatus], form.fields["status"]
+                forms.ModelChoiceField[ProjectStatus], form.fields["status"],
             )
-            statuses_qs = ProjectStatus.objects.filter(project=task.project)
-            if statuses_qs.exists():
-                status_field.empty_label = None
+            status_field.queryset = ProjectStatus.objects.filter(
+                project=context["task"].project,
+            )
+            if not status_field.queryset.exists():
+                status_field.empty_label = "No status"
             else:
-                status_field.queryset = ProjectStatus.objects.none()
+                status_field.empty_label = None
             context["form"] = form
 
         return context
@@ -170,7 +179,7 @@ class TaskUView(LoginRequiredMixin, TemplateView):
     ) -> HttpResponse:
         task = get_object_or_404(
             Task.objects.filter(
-                project__members__user=cast(AuthenticatedHttpRequest, self.request).user
+                project__members__user=cast(AuthenticatedHttpRequest, self.request).user,
             ),
             id=self.kwargs["task_id"],
         )
@@ -209,6 +218,7 @@ class TaskUView(LoginRequiredMixin, TemplateView):
         with transaction.atomic():
             comment_text = form.cleaned_data.get("comment_text")
             if comment_text:
+                form.changed_data.remove("comment_text")
                 task.last_comment_number += 1
                 comment = TaskComment.objects.create(
                     task=task,
@@ -219,8 +229,11 @@ class TaskUView(LoginRequiredMixin, TemplateView):
                 history_service.add_comment(comment)
 
             log_description = form.cleaned_data.get("log_description")
+            if log_description:
+                form.changed_data.remove("log_description")
             log_hours = form.cleaned_data.get("log_hours")
             if log_hours:
+                form.changed_data.remove("log_hours")
                 task.last_timelog_number += 1
                 timelog = TaskTimeLog.objects.create(
                     task=task,
@@ -230,6 +243,7 @@ class TaskUView(LoginRequiredMixin, TemplateView):
                     hours=log_hours,
                 )
                 history_service.add_timelog(timelog)
+
             if form.has_changed():
                 history_service.update()
             task.save()
@@ -276,7 +290,7 @@ class TaskTimeLogAPIView(APIView):
             )
         total_hours = (
             TaskTimeLog.objects.filter(task=timelog.task).aggregate(
-                models.Sum("hours")
+                models.Sum("hours"),
             )["hours__sum"]
             or 0
         )
@@ -315,7 +329,7 @@ class TaskTimeLogAPIView(APIView):
             history_entry = history_service.delete_timelog(timelog)
         total_hours = (
             TaskTimeLog.objects.filter(task=timelog.task).aggregate(
-                models.Sum("hours")
+                models.Sum("hours"),
             )["hours__sum"]
             or 0
         )
