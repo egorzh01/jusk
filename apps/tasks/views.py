@@ -125,7 +125,8 @@ class TaskView(LoginRequiredMixin, TemplateView):
         task = get_object_or_404(
             Task.objects.filter(
                 project__members__user=cast(
-                    AuthenticatedHttpRequest, self.request,
+                    AuthenticatedHttpRequest,
+                    self.request,
                 ).user,
             ),
             id=self.kwargs["task_id"],
@@ -133,7 +134,7 @@ class TaskView(LoginRequiredMixin, TemplateView):
         context["task"] = task
         total_hours = (
             TaskTimeLog.objects.filter(
-                task_id__in=TaskChecker.get_all_descendants(task) + [task.id],
+                task_id__in=task.get_all_descendant_ids() + [task.id],
             ).aggregate(models.Sum("hours"))["hours__sum"]
             or 0
         )
@@ -163,12 +164,10 @@ class TaskUView(LoginRequiredMixin, TemplateView):
                 projects__project=context["task"].project,
             )
             parent_field = cast(forms.ModelChoiceField[Task], form.fields["parent"])
-            parent_field.queryset = (
-                Task.objects.filter(
-                    project=context["task"].project,
-                )
-                .exclude(id__in=TaskChecker.get_all_descendants(task=context["task"]))
-                .exclude(id=context["task"].id)
+            parent_field.queryset = Task.objects.filter(
+                project=context["task"].project,
+            ).exclude(
+                id__in=context["task"].get_all_descendant_ids() + [context["task"].id],
             )
             status_field = cast(
                 forms.ModelChoiceField[ProjectStatus],
@@ -194,7 +193,8 @@ class TaskUView(LoginRequiredMixin, TemplateView):
         task = get_object_or_404(
             Task.objects.filter(
                 project__members__user=cast(
-                    AuthenticatedHttpRequest, self.request,
+                    AuthenticatedHttpRequest,
+                    self.request,
                 ).user,
             ),
             id=self.kwargs["task_id"],

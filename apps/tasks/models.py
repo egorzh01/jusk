@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import connection, models
 from django_stubs_ext.db.models import TypedModelMeta
 
 if TYPE_CHECKING:
@@ -64,7 +64,6 @@ class Task(WithCreatedAtAndUpdatedAt):
         blank=True,
     )
 
-
     def __str__(self) -> str:
         return self.title
 
@@ -72,6 +71,33 @@ class Task(WithCreatedAtAndUpdatedAt):
         if not self.status:
             return "No status"
         return self.status.name
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.descendant_ids: list[int] | None = None
+
+    def get_all_descendant_ids(self) -> list[int]:
+        if self.descendant_ids is not None:
+            return self.descendant_ids
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                    WITH RECURSIVE task_descendants AS (
+                        SELECT id
+                        FROM tasks
+                        WHERE parent_id = %s
+                        UNION ALL
+                        SELECT t.id
+                        FROM tasks t
+                        INNER JOIN task_descendants td ON td.id = t.parent_id
+                    )
+                    SELECT * FROM task_descendants;
+                    """,
+                [self.id],
+            )
+            result = cursor.fetchall()
+        self.descendant_ids = [row[0] for row in result]
+        return self.descendant_ids
 
     class Meta(TypedModelMeta):
         db_table = "tasks"

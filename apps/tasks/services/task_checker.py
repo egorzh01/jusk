@@ -1,8 +1,6 @@
-from django.db import connection
 from django.forms import ValidationError
 
 from apps.projects.models import Project
-from apps.tasks.models import Task
 from apps.tasks.services.task_history import TaskOldValues
 from apps.users.models import User
 
@@ -46,24 +44,3 @@ class TaskChecker:
                     assert not project.statuses.exists()
         except AssertionError as exc:
             raise ValidationError("The changes you made are not allowed") from exc
-
-    @staticmethod
-    def get_all_descendants(task: Task) -> list[int]:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                    WITH RECURSIVE task_descendants AS (
-                        SELECT id
-                        FROM tasks
-                        WHERE parent_id = %s
-                        UNION ALL
-                        SELECT t.id
-                        FROM tasks t
-                        INNER JOIN task_descendants td ON td.id = t.parent_id
-                    )
-                    SELECT * FROM task_descendants;
-                    """,
-                [task.id],
-            )
-            result = cursor.fetchall()
-        return [row[0] for row in result]
