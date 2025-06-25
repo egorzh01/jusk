@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Any
 
 from django import forms
@@ -8,7 +9,7 @@ from ..models import Task
 class CTaskForm(forms.ModelForm[Task]):
     class Meta:
         model = Task
-        fields = ["title", "description", "status", "executor"]
+        fields = ["title", "description", "status", "executor", "parent"]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -34,6 +35,12 @@ class CTaskForm(forms.ModelForm[Task]):
             "status": forms.Select(
                 attrs={
                     "id": "status",
+                    "class": "rounded border border-gray-300 p-1",
+                },
+            ),
+            "parent": forms.Select(
+                attrs={
+                    "id": "parent",
                     "class": "rounded border border-gray-300 p-1",
                 },
             ),
@@ -79,7 +86,13 @@ class UTaskForm(forms.ModelForm[Task]):
 
     class Meta:
         model = Task
-        fields = ["title", "description", "status", "executor"]
+        fields = [
+            "title",
+            "description",
+            "status",
+            "executor",
+            "parent",
+        ]
         widgets = {
             "title": forms.TextInput(
                 attrs={
@@ -108,6 +121,12 @@ class UTaskForm(forms.ModelForm[Task]):
                     "class": "rounded border border-gray-300 p-1",
                 },
             ),
+            "parent": forms.Select(
+                attrs={
+                    "id": "parent",
+                    "class": "rounded border border-gray-300 p-1",
+                },
+            ),
         }
 
     def clean(self) -> dict[str, Any] | None:
@@ -123,3 +142,13 @@ class UTaskForm(forms.ModelForm[Task]):
             )
 
         return cleaned_data
+
+    # def get_model_changed_fields(self) -> list[str]:
+    #     return [field for field in self.changed_data if field in self.Meta.fields]
+    @cached_property
+    def changed_data(self) -> list[str]:
+        return [
+            name
+            for name, bf in self._bound_items()  # type: ignore
+            if bf._has_changed() and name in self.Meta.fields
+        ]

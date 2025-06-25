@@ -57,26 +57,13 @@ class Task(WithCreatedAtAndUpdatedAt):
         on_delete=models.CASCADE,
         related_name="children",
     )
-    previous = models.ForeignKey(
-        "self",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="+",
-    )
-    next = models.ForeignKey(
-        "self",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="+",
-    )
     status = models.ForeignKey(
         "projects.ProjectStatus",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
+
 
     def __str__(self) -> str:
         return self.title

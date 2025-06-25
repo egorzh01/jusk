@@ -72,7 +72,8 @@ class CTaskView(LoginRequiredMixin, TemplateView):
                 projects__project=context["project"],
             )
             status_field = cast(
-                forms.ModelChoiceField[ProjectStatus], form.fields["status"],
+                forms.ModelChoiceField[ProjectStatus],
+                form.fields["status"],
             )
             status_field.queryset = ProjectStatus.objects.filter(
                 project=context["project"],
@@ -94,7 +95,9 @@ class CTaskView(LoginRequiredMixin, TemplateView):
         if not form.is_valid():
             return super().get(request, *args, **kwargs, form=form)
         form.instance.creator = request.user
-        form.instance.project = self.get_project()
+        form.instance.project = (
+            form.instance.parent.project if form.instance.parent else self.get_project()
+        )
         TaskChecker.check_all(
             status_id=form.instance.status_id,
             project=form.instance.project,
@@ -121,15 +124,17 @@ class TaskView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         task = get_object_or_404(
             Task.objects.filter(
-                project__members__user=cast(AuthenticatedHttpRequest, self.request).user,
+                project__members__user=cast(
+                    AuthenticatedHttpRequest, self.request,
+                ).user,
             ),
             id=self.kwargs["task_id"],
         )
         context["task"] = task
         total_hours = (
-            TaskTimeLog.objects.filter(task=task).aggregate(models.Sum("hours"))[
-                "hours__sum"
-            ]
+            TaskTimeLog.objects.filter(
+                task_id__in=TaskChecker.get_all_descendants(task) + [task.id],
+            ).aggregate(models.Sum("hours"))["hours__sum"]
             or 0
         )
         context["total_hours"] = f"{total_hours:.2f}"
@@ -157,8 +162,17 @@ class TaskUView(LoginRequiredMixin, TemplateView):
             executor_field.queryset = User.objects.filter(
                 projects__project=context["task"].project,
             )
+            parent_field = cast(forms.ModelChoiceField[Task], form.fields["parent"])
+            parent_field.queryset = (
+                Task.objects.filter(
+                    project=context["task"].project,
+                )
+                .exclude(id__in=TaskChecker.get_all_descendants(task=context["task"]))
+                .exclude(id=context["task"].id)
+            )
             status_field = cast(
-                forms.ModelChoiceField[ProjectStatus], form.fields["status"],
+                forms.ModelChoiceField[ProjectStatus],
+                form.fields["status"],
             )
             status_field.queryset = ProjectStatus.objects.filter(
                 project=context["task"].project,
@@ -179,7 +193,9 @@ class TaskUView(LoginRequiredMixin, TemplateView):
     ) -> HttpResponse:
         task = get_object_or_404(
             Task.objects.filter(
-                project__members__user=cast(AuthenticatedHttpRequest, self.request).user,
+                project__members__user=cast(
+                    AuthenticatedHttpRequest, self.request,
+                ).user,
             ),
             id=self.kwargs["task_id"],
         )
@@ -218,7 +234,6 @@ class TaskUView(LoginRequiredMixin, TemplateView):
         with transaction.atomic():
             comment_text = form.cleaned_data.get("comment_text")
             if comment_text:
-                form.changed_data.remove("comment_text")
                 task.last_comment_number += 1
                 comment = TaskComment.objects.create(
                     task=task,
@@ -229,11 +244,8 @@ class TaskUView(LoginRequiredMixin, TemplateView):
                 history_service.add_comment(comment)
 
             log_description = form.cleaned_data.get("log_description")
-            if log_description:
-                form.changed_data.remove("log_description")
             log_hours = form.cleaned_data.get("log_hours")
             if log_hours:
-                form.changed_data.remove("log_hours")
                 task.last_timelog_number += 1
                 timelog = TaskTimeLog.objects.create(
                     task=task,

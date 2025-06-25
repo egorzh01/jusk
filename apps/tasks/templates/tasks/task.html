@@ -8,10 +8,12 @@
     <span class="text-sm">Created at: {{ task.created_at|date:"Y-m-d H:i" }}</span>
     <span class="mb-6 text-sm">Last updated: {{ task.updated_at|date:"Y-m-d H:i" }}</span>
     <div class="space-y-8 text-sm">
-      <div class="flex flex-row gap-10">
+      <div class="flex flex-wrap gap-10">
         <div>
           <label class="block font-medium">Project</label>
-          <p class="pt-2 border-t border-gray-300 min-w-30">{{ task.project.title }}</p>
+          <a href="{% url 'projects:project' task.project.id %}">
+            <p class="pt-2 border-t border-gray-300 min-w-30">{{ task.project.title }}</p>
+          </a>
         </div>
         <div>
           <label class="block font-medium">Status</label>
@@ -27,6 +29,16 @@
             <span id="total-hours">{{ total_hours }}</span> hours
           </p>
         </div>
+        {% if task.parent %}
+          <div>
+            <label class="block font-medium">Parent</label>
+            <p class="pt-2 border-t border-gray-300 min-w-40">
+              <a href="{% url 'tasks:task' task.parent.id %}">
+                <span class="font-medium">#{{ task.parent.id }}:</span> {{ task.parent.title }}
+              </a>
+            </p>
+          </div>
+        {% endif %}
       </div>
       <div>
         <label class="block font-medium">Title</label>
@@ -36,6 +48,18 @@
         <label class="block font-medium">Description</label>
         <p class="w-fit min-w-40 pt-2 border-t border-gray-300 whitespace-pre-wrap break-all">{{ task.description }}</p>
       </div>
+      {% if task.children.exists %}
+        <div>
+          <span class="block font-medium">Children</span>
+          <div class="pt-2 w-fit min-w-40 flex flex-wrap gap-2 border-t border-gray-300">
+            {% for child in task.children.all %}
+              <a href="{% url 'tasks:task' task_id=child.id %}"
+                 class="border border-gray-300 p-2 rounded hover:bg-gray-300"><span class="font-medium">#{{ child.id }}:</span> {{ child.title }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
       {% include "tasks/comments__timelogs__history.html" %}
     </div>
   </div>
